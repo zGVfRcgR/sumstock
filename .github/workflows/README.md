@@ -33,6 +33,8 @@ SumStock.jpから物件データを自動取得します。
 
 ### SumStock Data Scrapingを手動実行
 
+手動実行により、スケジュールを待たずに即座にデータ取得を実行できます。
+
 1. GitHubリポジトリの「Actions」タブを開く
 2. 「Scrape SumStock Data」ワークフローを選択
 3. 「Run workflow」ボタンをクリック
@@ -40,6 +42,7 @@ SumStock.jpから物件データを自動取得します。
 5. 「Run workflow」をクリックして実行
 
 URLを指定しない場合は、"tracking"ラベルが付いたIssueから自動的にURLを抽出します。
+手動実行は月次スケジュールとは独立して動作するため、必要に応じて何度でも実行できます。
 
 ## 必要な権限
 
