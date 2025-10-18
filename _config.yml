@@ -5,7 +5,22 @@ baseurl: "/sumstock"
 url: "https://zGVfRcgR.github.io"
 
 # Theme settings
-theme: just-the-docs
+remote_theme: just-the-docs/just-the-docs
+
+# Exclude theme files from build  
+exclude:
+  - CHANGELOG.md
+  - MIGRATION.md
+  - CODE_OF_CONDUCT.md
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - vendor/
+  - node_modules/
+  - package.json
+  - package-lock.json
+  - Rakefile
+  - just-the-docs.gemspec
 
 # Just the Docs specific settings
 # Enable or disable the site search
