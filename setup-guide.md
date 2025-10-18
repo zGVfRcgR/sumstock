@@ -45,6 +45,11 @@ sumstock/
 ├── Gemfile              # Ruby依存関係
 ├── .gitignore           # Git除外設定
 ├── index.md             # トップページ
+├── setup-guide.md       # このガイド
+├── data/                # 物件データディレクトリ
+│   ├── index.md         # データ一覧ページ
+│   ├── sample.md        # サンプルデータ
+│   └── YYYY-MM-DD.md    # 各日の物件データ（自動生成）
 ├── docs/                # ドキュメントディレクトリ
 │   ├── index.md
 │   ├── getting-started.md
