@@ -8,6 +8,16 @@ _site/
 .bundle/
 vendor/
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
 # Misc
 .DS_Store
 Gemfile.lock

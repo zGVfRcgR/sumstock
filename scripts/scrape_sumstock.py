@@ -1,0 +1,265 @@
+#!/usr/bin/env python3
+"""
+SumStock property data scraper
+Scrapes property information from SumStock.jp and generates Markdown files
+"""
+
+import os
+import sys
+import re
+import json
+from datetime import datetime
+from typing import List, Dict, Optional
+import requests
+from bs4 import BeautifulSoup
+
+
+def extract_url_from_issue(issue_body: str) -> Optional[str]:
+    """Extract SumStock URL from issue body"""
+    # Look for SumStock URLs in the issue body
+    url_pattern = r'https://sumstock\.jp/search/\d+/\d+/\d+'
+    match = re.search(url_pattern, issue_body)
+    if match:
+        return match.group(0)
+    return None
+
+
+def parse_price(price_str: str) -> Optional[float]:
+    """Parse price string and return value in man-yen (万円)"""
+    if not price_str or price_str == '-':
+        return None
+    # Remove '万円' and commas, convert to float
+    price_str = price_str.replace('万円', '').replace(',', '').strip()
+    try:
+        return float(price_str)
+    except ValueError:
+        return None
+
+
+def parse_area(area_str: str) -> Optional[float]:
+    """Parse area string and return value in m²"""
+    if not area_str or area_str == '-':
+        return None
+    # Remove 'm²' and commas, convert to float
+    area_str = area_str.replace('m²', '').replace('㎡', '').replace(',', '').strip()
+    try:
+        return float(area_str)
+    except ValueError:
+        return None
+
+
+def calculate_unit_price(price: Optional[float], area: Optional[float]) -> Optional[float]:
+    """Calculate unit price (price per m²)"""
+    if price is None or area is None or area == 0:
+        return None
+    return price / area
+
+
+def scrape_property_data(url: str) -> List[Dict]:
+    """Scrape property data from SumStock URL"""
+    try:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        response = requests.get(url, headers=headers, timeout=30)
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.content, 'html.parser')
+        properties = []
+        
+        # Try multiple selectors to find property listings
+        # Common patterns for property listing sites
+        selectors = [
+            'div.property-item',
+            'div.property-card',
+            'div.property',
+            'li.property-item',
+            'div[class*="property"]',
+            'article.property',
+            'div.bukken-item',
+            'div.item',
+            'tr.property',
+        ]
+        
+        property_items = []
+        for selector in selectors:
+            items = soup.select(selector)
+            if items and len(items) > 0:
+                property_items = items
+                print(f"Found {len(items)} items using selector: {selector}", file=sys.stderr)
+                break
+        
+        # If no items found with specific selectors, try to find all divs with data
+        if not property_items:
+            print("Warning: No property items found with standard selectors", file=sys.stderr)
+            # Return empty list - the calling code will handle this
+            return []
+        
+        for item in property_items:
+            try:
+                # Initialize with default values
+                property_data = {
+                    'location': '不明',
+                    'total_price': '-',
+                    'building_price': '-',
+                    'building_area': '-',
+                    'building_unit_price': '-',
+                    'land_price': '-',
+                    'land_area': '-',
+                    'land_unit_price': '-',
+                    'maker': '-'
+                }
+                
+                # Try to extract location
+                location_patterns = [
+                    re.compile(r'[都道府県][市区町村].*?[0-9０-９]+丁目'),
+                    re.compile(r'[市区町村].*?[0-9０-９]'),
+                ]
+                
+                item_text = item.get_text()
+                for pattern in location_patterns:
+                    match = pattern.search(item_text)
+                    if match:
+                        property_data['location'] = match.group(0).strip()
+                        break
+                
+                # Try to find price elements
+                price_pattern = re.compile(r'([0-9,]+)\s*万円')
+                prices = price_pattern.findall(item_text)
+                
+                # Try to find area elements
+                area_pattern = re.compile(r'([0-9.]+)\s*[m²㎡]')
+                areas = area_pattern.findall(item_text)
+                
+                # Process prices (typically: total, building, land)
+                if len(prices) >= 1:
+                    property_data['total_price'] = f"{prices[0]}万円"
+                if len(prices) >= 2:
+                    property_data['building_price'] = f"{prices[1]}万円"
+                    building_price = parse_price(property_data['building_price'])
+                    if len(areas) >= 1:
+                        property_data['building_area'] = f"{areas[0]}m²"
+                        building_area = parse_area(property_data['building_area'])
+                        unit_price = calculate_unit_price(building_price, building_area)
+                        if unit_price:
+                            property_data['building_unit_price'] = f"約{unit_price:.2f}万円/m²"
+                if len(prices) >= 3:
+                    property_data['land_price'] = f"{prices[2]}万円"
+                    land_price = parse_price(property_data['land_price'])
+                    if len(areas) >= 2:
+                        property_data['land_area'] = f"{areas[1]}m²"
+                        land_area = parse_area(property_data['land_area'])
+                        unit_price = calculate_unit_price(land_price, land_area)
+                        if unit_price:
+                            property_data['land_unit_price'] = f"約{unit_price:.2f}万円/m²"
+                
+                # Try to find house maker
+                maker_patterns = ['積水ハウス', 'ダイワハウス', '大和ハウス', 'セキスイハイム', 
+                                'パナホーム', 'ミサワホーム', 'ヘーベルハウス', '住友林業', 
+                                'トヨタホーム', '三井ホーム']
+                for maker in maker_patterns:
+                    if maker in item_text:
+                        property_data['maker'] = maker
+                        break
+                
+                # Only add if we found at least some data
+                if property_data['location'] != '不明' or len(prices) > 0:
+                    properties.append(property_data)
+                
+            except Exception as e:
+                print(f"Error parsing property item: {e}", file=sys.stderr)
+                continue
+        
+        return properties
+        
+    except requests.RequestException as e:
+        print(f"Error fetching URL {url}: {e}", file=sys.stderr)
+        return []
+
+
+def format_markdown(properties: List[Dict], url: str, date: datetime) -> str:
+    """Format property data as Markdown"""
+    date_str = date.strftime('%Y年%m月%d日')
+    
+    markdown = f"""---
+layout: default
+title: {date.strftime('%Y-%m-%d')}
+parent: データ一覧
+nav_order: {date.strftime('%Y%m%d')}
+---
+
+# スムストック物件データ
+
+## 取得日: {date_str}
+### 参照URL: [{url}]({url})
+
+| 所在地（町名） | 総額 | 建物価格 | 建物面積 | 建物単価（万円/m²） | 土地価格 | 土地面積 | 土地単価（万円/m²） | ハウスメーカー |
+|----------------|-------|------------|-------------|------------------------|------------|-------------|------------------------|----------------|
+"""
+    
+    if not properties:
+        markdown += "| データなし | - | - | - | - | - | - | - | - |\n"
+    else:
+        for prop in properties:
+            markdown += f"| {prop['location']} | {prop['total_price']} | {prop['building_price']} | {prop['building_area']} | {prop['building_unit_price']} | {prop['land_price']} | {prop['land_area']} | {prop['land_unit_price']} | {prop['maker']} |\n"
+    
+    markdown += "\n---\n\n**注意**: データは自動的に取得されます。\n"
+    
+    return markdown
+
+
+def save_markdown_file(markdown: str, date: datetime, output_dir: str = 'data'):
+    """Save Markdown content to file"""
+    os.makedirs(output_dir, exist_ok=True)
+    filename = date.strftime('%Y-%m-%d.md')
+    filepath = os.path.join(output_dir, filename)
+    
+    with open(filepath, 'w', encoding='utf-8') as f:
+        f.write(markdown)
+    
+    print(f"Saved data to {filepath}")
+    return filepath
+
+
+def main():
+    """Main function"""
+    # Get issue body from environment variable or argument
+    issue_body = os.environ.get('ISSUE_BODY', '')
+    
+    if len(sys.argv) > 1:
+        url = sys.argv[1]
+    else:
+        url = extract_url_from_issue(issue_body)
+    
+    if not url:
+        print("Error: No SumStock URL found. Please provide URL as argument or in ISSUE_BODY environment variable.", file=sys.stderr)
+        sys.exit(1)
+    
+    print(f"Scraping data from: {url}")
+    
+    # Scrape data
+    properties = scrape_property_data(url)
+    
+    if not properties:
+        print("Warning: No property data found. Creating file with empty data.", file=sys.stderr)
+    
+    # Get current date
+    current_date = datetime.now()
+    
+    # Format as Markdown
+    markdown = format_markdown(properties, url, current_date)
+    
+    # Save to file
+    filepath = save_markdown_file(markdown, current_date)
+    
+    print(f"Successfully processed {len(properties)} properties")
+    
+    # Output filepath for GitHub Actions
+    if os.environ.get('GITHUB_OUTPUT'):
+        with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+            f.write(f"filepath={filepath}\n")
+            f.write(f"date={current_date.strftime('%Y-%m-%d')}\n")
+
+
+if __name__ == '__main__':
+    main()
