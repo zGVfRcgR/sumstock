@@ -17,7 +17,7 @@ nav_order: 3
 3. 左サイドバーの「Pages」をクリック
 4. 「Source」セクションで以下を設定：
    - Source: `Deploy from a branch`
-   - Branch: `main` (または `copilot/setup-github-pages-website`)
+   - Branch: `main`
    - Folder: `/ (root)`
 5. 「Save」ボタンをクリック
 
