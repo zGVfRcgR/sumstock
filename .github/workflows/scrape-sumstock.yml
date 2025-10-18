@@ -1,0 +1,103 @@
+name: Scrape SumStock Data
+
+on:
+  schedule:
+    # Run on the 1st day of every month at 00:00 UTC
+    - cron: '0 0 1 * *'
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'SumStock URL to scrape (optional, will use issue body if not provided)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: read
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Get issue body
+        id: get-issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Find the tracking issue (you may need to adjust this logic)
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'tracking'
+            });
+
+            let issueBody = '';
+            if (issues.data.length > 0) {
+              issueBody = issues.data[0].body || '';
+            }
+
+            core.setOutput('issue_body', issueBody);
+            return issueBody;
+
+      - name: Run scraper
+        env:
+          ISSUE_BODY: ${{ steps.get-issue.outputs.issue_body }}
+        run: |
+          if [ -n "${{ inputs.url }}" ]; then
+            python scripts/scrape_sumstock.py "${{ inputs.url }}"
+          else
+            python scripts/scrape_sumstock.py
+          fi
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create Pull Request
+        id: create-pr
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "Add SumStock data for $(date +%Y-%m-%d)"
+          branch: "sumstock-data-$(date +%Y-%m-%d)"
+          delete-branch: true
+          title: "🏠 SumStock データ更新: $(date +%Y年%m月%d日)"
+          body: |
+            ## SumStock データ更新
+
+            取得日: $(date +%Y年%m月%d日)
+
+            このPRは自動的に生成されました。
+
+            ### 変更内容
+            - 新しい物件データの追加
+
+            ### 確認事項
+            - [ ] データが正しく取得されているか確認
+            - [ ] Markdown形式が正しいか確認
+            - [ ] 単価計算が正しいか確認
+          labels: |
+            automated
+            data-update
+
+      - name: PR Created
+        if: steps.create-pr.outputs.pull-request-number
+        run: |
+          echo "Pull Request created: #${{ steps.create-pr.outputs.pull-request-number }}"
+          echo "URL: ${{ steps.create-pr.outputs.pull-request-url }}"

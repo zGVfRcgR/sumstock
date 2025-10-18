@@ -44,6 +44,7 @@ sumstock/
 ├── _config.yml          # Jekyll設定ファイル
 ├── Gemfile              # Ruby依存関係
 ├── .gitignore           # Git除外設定
+├── requirements.txt     # Python依存関係
 ├── index.md             # トップページ
 ├── setup-guide.md       # このガイド
 ├── data/                # 物件データディレクトリ
@@ -54,10 +55,37 @@ sumstock/
 │   ├── index.md
 │   ├── getting-started.md
 │   └── usage.md
+├── scripts/             # データ取得スクリプト
+│   ├── README.md
+│   ├── scrape_sumstock.py
+│   └── test_scraper.py
 └── .github/
     └── workflows/
-        └── jekyll.yml   # 自動デプロイワークフロー
+        ├── jekyll.yml         # 自動デプロイワークフロー
+        └── scrape-sumstock.yml # データ取得ワークフロー
 ```
+
+## データ取得の設定
+
+### Tracking Issueの作成
+
+データ取得ワークフローは、"tracking"ラベルが付いたIssueからURLを自動抽出します。
+
+1. 新しいIssueを作成
+2. Issue本文にSumStockのURLを記載（例：`https://sumstock.jp/search/02/12/12207`）
+3. "tracking"ラベルを追加
+4. Issueを保存（クローズしないでください）
+
+ワークフローは、このIssueからURLを読み取り、データを取得します。
+
+### ワークフローの権限設定
+
+GitHub Actionsがデータを自動で取得してPRを作成するには、適切な権限が必要です：
+
+1. リポジトリの「Settings」→「Actions」→「General」を開く
+2. 「Workflow permissions」セクションで以下を確認：
+   - 「Read and write permissions」が選択されている
+   - 「Allow GitHub Actions to create and approve pull requests」にチェックが入っている
 
 ## カスタマイズ
 
