@@ -134,54 +134,60 @@ def scrape_property_data(url: str) -> List[Dict]:
                             property_data['location'] = match.group(0).strip()
                             break
                 
-                # Try to find price elements with label-based extraction
-                # This ensures prices are correctly mapped to their labels
+                # Price extraction (label-aware):
+                # - total: take from `div.price`
+                # - building/land: take from `div.priceItems` using label-aware regex
                 prices_dict = {}
-                
-                # Try to find price divs with labels (SumStock-specific structure)
-                price_divs = item.select('div.price')
-                for price_div in price_divs:
-                    # Try multiple selector patterns for labels (more robust)
-                    label_elem = price_div.select_one('span.label, .label, [class*="label"]')
-                    bold_elem = price_div.select_one('span.bold, .bold, [class*="bold"]')
-                    
-                    if label_elem and bold_elem:
-                        # Normalize label text by removing extra whitespace
-                        label = re.sub(r'\s+', '', label_elem.get_text().strip())
-                        value = bold_elem.get_text().replace('万円', '').strip()
-                        
-                        # Map labels to standardized keys using normalized text
-                        # Use component matching since whitespace has been normalized
-                        # Note: '総額' is a complete term (total price), while others need both components
-                        if '総額' in label:
-                            prices_dict['total'] = value
-                        elif '建物' in label and '価格' in label:
-                            prices_dict['building'] = value
-                        elif '土地' in label and '価格' in label:
-                            prices_dict['land'] = value
-                
-                # Fallback: If label-based extraction didn't work, try extracting all .bold elements
-                if not prices_dict:
+
+                # Total price: usually in div.price
+                total_elem = item.select_one('div.price')
+                if total_elem:
+                    total_text = total_elem.get_text(separator=' ', strip=True)
+                    m = re.search(r'([0-9,]+)\s*万円', total_text)
+                    if m:
+                        prices_dict['total'] = m.group(1)
+
+                # Building / Land: try to parse from div.priceItems (label + number)
+                price_items_elem = item.select_one('div.priceItems')
+                if price_items_elem:
+                    pi_text = price_items_elem.get_text(separator=' ', strip=True)
+                    # e.g. "建物価格 1,054 万円 / 土地価格 2,226 万円"
+                    b_match = re.search(r'建物価格[^0-9\n\r\u3000-]*([0-9,]+)\s*万円', pi_text)
+                    l_match = re.search(r'土地価格[^0-9\n\r\u3000-]*([0-9,]+)\s*万円', pi_text)
+                    if b_match:
+                        prices_dict['building'] = b_match.group(1)
+                    if l_match:
+                        prices_dict['land'] = l_match.group(1)
+
+                # Fallbacks: if above didn't find some entries, try span.bold (often contains building/land),
+                # then finally a regex against the whole item text.
+                if 'building' not in prices_dict or 'land' not in prices_dict:
+                    # collect numbers from span.bold in DOM order
                     bold_price_elems = item.select('span.bold')
-                    prices = []
-                    if bold_price_elems:
-                        for elem in bold_price_elems:
-                            text = elem.get_text().replace('万円', '').strip()
-                            if text:
-                                prices.append(text)
-                    
-                    # Further fallback to regex pattern if no .bold elements found
-                    if not prices:
-                        price_pattern = re.compile(r'([0-9,]+)\s*万円')
-                        prices = price_pattern.findall(item_text)
-                    
-                    # Map fallback prices array to dict (order-based)
-                    if len(prices) >= 1:
-                        prices_dict['total'] = prices[0]
-                    if len(prices) >= 2:
-                        prices_dict['building'] = prices[1]
-                    if len(prices) >= 3:
-                        prices_dict['land'] = prices[2]
+                    bold_prices = []
+                    for elem in bold_price_elems:
+                        t = elem.get_text(separator='', strip=True).replace('万円', '')
+                        if t:
+                            bold_prices.append(t)
+
+                    # If we have two bold prices, map them to building and land
+                    if len(bold_prices) >= 2:
+                        if 'building' not in prices_dict:
+                            prices_dict['building'] = bold_prices[0]
+                        if 'land' not in prices_dict:
+                            prices_dict['land'] = bold_prices[1]
+
+                if 'total' not in prices_dict or 'building' not in prices_dict or 'land' not in prices_dict:
+                    # final fallback: regex against full item text (order-based: total, building, land)
+                    price_pattern = re.compile(r'([0-9,]+)\s*万円')
+                    all_prices = price_pattern.findall(item_text)
+                    if all_prices:
+                        if 'total' not in prices_dict and len(all_prices) >= 1:
+                            prices_dict['total'] = all_prices[0]
+                        if 'building' not in prices_dict and len(all_prices) >= 2:
+                            prices_dict['building'] = all_prices[1]
+                        if 'land' not in prices_dict and len(all_prices) >= 3:
+                            prices_dict['land'] = all_prices[2]
                 
                 # Try to find area elements with label-based extraction
                 areas_dict = {}
