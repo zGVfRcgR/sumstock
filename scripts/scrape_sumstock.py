@@ -134,55 +134,110 @@ def scrape_property_data(url: str) -> List[Dict]:
                             property_data['location'] = match.group(0).strip()
                             break
                 
-                # Try to find price elements
-                # First try SumStock-specific .bold elements
-                bold_price_elems = item.select('span.bold')
-                prices = []
-                if bold_price_elems:
-                    for elem in bold_price_elems:
-                        # Extract text and remove 万円 and get just the number
-                        text = elem.get_text().replace('万円', '').strip()
-                        if text:
-                            prices.append(text)
+                # Try to find price elements with label-based extraction
+                # This ensures prices are correctly mapped to their labels
+                prices_dict = {}
                 
-                # Fallback to regex pattern if no .bold elements found
-                if not prices:
-                    price_pattern = re.compile(r'([0-9,]+)\s*万円')
-                    prices = price_pattern.findall(item_text)
+                # Try to find price divs with labels (SumStock-specific structure)
+                price_divs = item.select('div.price')
+                for price_div in price_divs:
+                    label_elem = price_div.select_one('span.label')
+                    bold_elem = price_div.select_one('span.bold')
+                    
+                    if label_elem and bold_elem:
+                        label = label_elem.get_text().strip()
+                        value = bold_elem.get_text().replace('万円', '').strip()
+                        
+                        # Map labels to standardized keys
+                        if '総額' in label:
+                            prices_dict['total'] = value
+                        elif '建物' in label and '価格' in label:
+                            prices_dict['building'] = value
+                        elif '土地' in label and '価格' in label:
+                            prices_dict['land'] = value
                 
-                # Try to find area elements
-                # First try SumStock-specific .value elements within .area divs
-                area_elems = item.select('.area .value')
-                areas = []
-                if area_elems:
-                    for elem in area_elems:
-                        # Extract text and remove m² symbols
-                        text = elem.get_text().replace('m²', '').replace('㎡', '').strip()
-                        if text:
-                            areas.append(text)
+                # Fallback: If label-based extraction didn't work, try extracting all .bold elements
+                if not prices_dict:
+                    bold_price_elems = item.select('span.bold')
+                    prices = []
+                    if bold_price_elems:
+                        for elem in bold_price_elems:
+                            text = elem.get_text().replace('万円', '').strip()
+                            if text:
+                                prices.append(text)
+                    
+                    # Further fallback to regex pattern if no .bold elements found
+                    if not prices:
+                        price_pattern = re.compile(r'([0-9,]+)\s*万円')
+                        prices = price_pattern.findall(item_text)
+                    
+                    # Map fallback prices array to dict (order-based)
+                    if len(prices) >= 1:
+                        prices_dict['total'] = prices[0]
+                    if len(prices) >= 2:
+                        prices_dict['building'] = prices[1]
+                    if len(prices) >= 3:
+                        prices_dict['land'] = prices[2]
                 
-                # Fallback to regex pattern if no .value elements found
-                if not areas:
-                    area_pattern = re.compile(r'([0-9.]+)\s*[m²㎡]')
-                    areas = area_pattern.findall(item_text)
+                # Try to find area elements with label-based extraction
+                areas_dict = {}
                 
-                # Process prices (typically: total, building, land)
-                if len(prices) >= 1:
-                    property_data['total_price'] = f"{prices[0]}万円"
-                if len(prices) >= 2:
-                    property_data['building_price'] = f"{prices[1]}万円"
-                    building_price = parse_price(property_data['building_price'])
+                # Try to find area divs with labels (SumStock-specific structure)
+                area_divs = item.select('div.area')
+                for area_div in area_divs:
+                    label_elem = area_div.select_one('span.label')
+                    value_elem = area_div.select_one('span.value')
+                    
+                    if label_elem and value_elem:
+                        label = label_elem.get_text().strip()
+                        value = value_elem.get_text().replace('m²', '').replace('㎡', '').strip()
+                        
+                        # Map labels to standardized keys
+                        if '建物' in label and '面積' in label:
+                            areas_dict['building'] = value
+                        elif '土地' in label and '面積' in label:
+                            areas_dict['land'] = value
+                
+                # Fallback: If label-based extraction didn't work, try extracting all .value elements
+                if not areas_dict:
+                    area_elems = item.select('.area .value')
+                    areas = []
+                    if area_elems:
+                        for elem in area_elems:
+                            text = elem.get_text().replace('m²', '').replace('㎡', '').strip()
+                            if text:
+                                areas.append(text)
+                    
+                    # Further fallback to regex pattern if no .value elements found
+                    if not areas:
+                        area_pattern = re.compile(r'([0-9.]+)\s*[m²㎡]')
+                        areas = area_pattern.findall(item_text)
+                    
+                    # Map fallback areas array to dict (order-based)
                     if len(areas) >= 1:
-                        property_data['building_area'] = f"{areas[0]}m²"
+                        areas_dict['building'] = areas[0]
+                    if len(areas) >= 2:
+                        areas_dict['land'] = areas[1]
+                
+                # Process prices using the dictionary
+                if 'total' in prices_dict:
+                    property_data['total_price'] = f"{prices_dict['total']}万円"
+                
+                if 'building' in prices_dict:
+                    property_data['building_price'] = f"{prices_dict['building']}万円"
+                    building_price = parse_price(property_data['building_price'])
+                    if 'building' in areas_dict:
+                        property_data['building_area'] = f"{areas_dict['building']}m²"
                         building_area = parse_area(property_data['building_area'])
                         unit_price = calculate_unit_price(building_price, building_area)
                         if unit_price:
                             property_data['building_unit_price'] = f"約{unit_price:.2f}万円/m²"
-                if len(prices) >= 3:
-                    property_data['land_price'] = f"{prices[2]}万円"
+                
+                if 'land' in prices_dict:
+                    property_data['land_price'] = f"{prices_dict['land']}万円"
                     land_price = parse_price(property_data['land_price'])
-                    if len(areas) >= 2:
-                        property_data['land_area'] = f"{areas[1]}m²"
+                    if 'land' in areas_dict:
+                        property_data['land_area'] = f"{areas_dict['land']}m²"
                         land_area = parse_area(property_data['land_area'])
                         unit_price = calculate_unit_price(land_price, land_area)
                         if unit_price:
@@ -198,7 +253,7 @@ def scrape_property_data(url: str) -> List[Dict]:
                         break
                 
                 # Only add if we found at least some data
-                if property_data['location'] != '不明' or len(prices) > 0:
+                if property_data['location'] != '不明' or prices_dict:
                     properties.append(property_data)
                 
             except Exception as e:
