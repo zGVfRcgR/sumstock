@@ -141,19 +141,21 @@ def scrape_property_data(url: str) -> List[Dict]:
                 # Try to find price divs with labels (SumStock-specific structure)
                 price_divs = item.select('div.price')
                 for price_div in price_divs:
-                    label_elem = price_div.select_one('span.label')
-                    bold_elem = price_div.select_one('span.bold')
+                    # Try multiple selector patterns for labels (more robust)
+                    label_elem = price_div.select_one('span.label, .label, [class*="label"]')
+                    bold_elem = price_div.select_one('span.bold, .bold, [class*="bold"]')
                     
                     if label_elem and bold_elem:
-                        label = label_elem.get_text().strip()
+                        # Normalize label text by removing extra whitespace
+                        label = re.sub(r'\s+', '', label_elem.get_text().strip())
                         value = bold_elem.get_text().replace('万円', '').strip()
                         
-                        # Map labels to standardized keys
-                        if '総額' in label:
+                        # Map labels to standardized keys using normalized text
+                        if '総額' == label or '総額' in label:
                             prices_dict['total'] = value
-                        elif '建物' in label and '価格' in label:
+                        elif '建物価格' in label or ('建物' in label and '価格' in label):
                             prices_dict['building'] = value
-                        elif '土地' in label and '価格' in label:
+                        elif '土地価格' in label or ('土地' in label and '価格' in label):
                             prices_dict['land'] = value
                 
                 # Fallback: If label-based extraction didn't work, try extracting all .bold elements
@@ -185,17 +187,19 @@ def scrape_property_data(url: str) -> List[Dict]:
                 # Try to find area divs with labels (SumStock-specific structure)
                 area_divs = item.select('div.area')
                 for area_div in area_divs:
-                    label_elem = area_div.select_one('span.label')
-                    value_elem = area_div.select_one('span.value')
+                    # Try multiple selector patterns for labels (more robust)
+                    label_elem = area_div.select_one('span.label, .label, [class*="label"]')
+                    value_elem = area_div.select_one('span.value, .value, [class*="value"]')
                     
                     if label_elem and value_elem:
-                        label = label_elem.get_text().strip()
+                        # Normalize label text by removing extra whitespace
+                        label = re.sub(r'\s+', '', label_elem.get_text().strip())
                         value = value_elem.get_text().replace('m²', '').replace('㎡', '').strip()
                         
-                        # Map labels to standardized keys
-                        if '建物' in label and '面積' in label:
+                        # Map labels to standardized keys using normalized text
+                        if '建物面積' in label or ('建物' in label and '面積' in label):
                             areas_dict['building'] = value
-                        elif '土地' in label and '面積' in label:
+                        elif '土地面積' in label or ('土地' in label and '面積' in label):
                             areas_dict['land'] = value
                 
                 # Fallback: If label-based extraction didn't work, try extracting all .value elements
