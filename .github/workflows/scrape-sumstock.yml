@@ -70,18 +70,24 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+      - name: Set date variable
+        run: echo "DATE=$(date +%Y-%m-%d)" >> $GITHUB_ENV
+
+      - name: Set Japanese date variable
+        run: echo "DATE_JP=$(date +%Y年%m月%d日)" >> $GITHUB_ENV
+
       - name: Create Pull Request
         id: create-pr
         uses: peter-evans/create-pull-request@v6
         with:
-          commit-message: "Add SumStock data for $(date +%Y-%m-%d)"
-          branch: "sumstock-data-$(date +%Y-%m-%d)"
+          commit-message: "Add SumStock data for ${{ env.DATE }}"
+          branch: "sumstock-data-${{ env.DATE }}"
           delete-branch: true
-          title: "🏠 SumStock データ更新: $(date +%Y年%m月%d日)"
+          title: "🏠 SumStock データ更新: ${{ env.DATE_JP }}"
           body: |
             ## SumStock データ更新
 
-            取得日: $(date +%Y年%m月%d日)
+            取得日: ${{ env.DATE_JP }}
 
             このPRは自動的に生成されました。
 
