@@ -10,6 +10,8 @@ import os
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from scripts.scrape_sumstock import extract_urls_from_issue
+
 def demo_single_url():
     """Demo 1: Single URL via CLI (backward compatible)"""
     print("=" * 70)
@@ -104,8 +106,6 @@ def show_url_extraction_examples():
     print("=" * 70)
     print("URL Extraction Examples")
     print("=" * 70)
-    
-    from scripts.scrape_sumstock import extract_urls_from_issue
     
     # Example 1: Simple list
     example1 = """対象URL: https://sumstock.jp/search/02/12/12207
