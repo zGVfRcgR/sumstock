@@ -13,6 +13,14 @@ from typing import List, Dict, Optional
 import requests
 from bs4 import BeautifulSoup
 
+# Import location mapping functions
+try:
+    from location_mapping import parse_url_location
+except ImportError:
+    # Fallback if running from different directory
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from location_mapping import parse_url_location
+
 
 def extract_urls_from_issue(issue_body: str) -> List[str]:
     """Extract all SumStock URLs from issue body"""
@@ -309,7 +317,7 @@ nav_order: {date.strftime('%Y%m%d')}
     return markdown
 
 
-def save_markdown_file(markdown: str, date: datetime, output_dir: str = 'data', suffix: str = ''):
+def save_markdown_file(markdown: str, date: datetime, output_dir: str = 'data', suffix: str = '', url: str = ''):
     """Save Markdown content to file
     
     Args:
@@ -317,7 +325,15 @@ def save_markdown_file(markdown: str, date: datetime, output_dir: str = 'data', 
         date: Date for filename
         output_dir: Output directory path
         suffix: Optional suffix for filename (e.g., '_1', '_2')
+        url: Optional URL to extract location information for folder structure
     """
+    # If URL is provided, extract location and create folder structure
+    if url:
+        pref_code, pref_name, city_code, city_name = parse_url_location(url)
+        # Create folder structure: data/prefecture/city/
+        # Always create folders even for unknown locations (その他)
+        output_dir = os.path.join(output_dir, pref_name, city_name)
+    
     os.makedirs(output_dir, exist_ok=True)
     filename = date.strftime('%Y-%m-%d') + suffix + '.md'
     filepath = os.path.join(output_dir, filename)
@@ -367,9 +383,9 @@ def main():
         # Format as Markdown
         markdown = format_markdown(properties, url, current_date)
         
-        # Save to file with suffix if multiple URLs
-        suffix = f"_{i}" if len(urls) > 1 else ""
-        filepath = save_markdown_file(markdown, current_date, suffix=suffix)
+        # Save to file with location-based folder structure
+        # No suffix needed when using location folders (each location gets its own folder)
+        filepath = save_markdown_file(markdown, current_date, url=url)
         filepaths.append(filepath)
         
         print(f"Successfully processed {len(properties)} properties from URL {i}")

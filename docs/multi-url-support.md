@@ -45,15 +45,15 @@ python scripts/scrape_sumstock.py \
 Found 3 URL(s) to process
 
 [1/3] Scraping data from: https://sumstock.jp/search/02/12/12207
-Saved data to data/2025-10-19_1.md
+Saved data to data/千葉県/松戸市/2025-10-19.md
 Successfully processed X properties from URL 1
 
 [2/3] Scraping data from: https://sumstock.jp/search/02/12/12208
-Saved data to data/2025-10-19_2.md
+Saved data to data/千葉県/野田市/2025-10-19.md
 Successfully processed X properties from URL 2
 
 [3/3] Scraping data from: https://sumstock.jp/search/02/12/12209
-Saved data to data/2025-10-19_3.md
+Saved data to data/千葉県/茂原市/2025-10-19.md
 Successfully processed X properties from URL 3
 
 === Summary ===
@@ -75,7 +75,7 @@ GitHub Actionsから実行する際、Issue本文に複数のURLが含まれて�
 
 **GITHUB_OUTPUT出力例:**
 ```
-filepath=data/2025-10-19_1.md,data/2025-10-19_2.md,data/2025-10-19_3.md
+filepath=data/千葉県/松戸市/2025-10-19.md,data/千葉県/野田市/2025-10-19.md,data/千葉県/茂原市/2025-10-19.md
 date=2025-10-19
 count=3
 ```
@@ -146,12 +146,33 @@ python tests/test_multi_url_e2e.py
 python tests/demo_multi_url.py
 ```
 
-## ファイル命名規則
+## ファイル命名規則と保存先
 
-| URLの数 | ファイル名形式 | 例 |
-|---------|---------------|-----|
-| 1個 | `YYYY-MM-DD.md` | `2025-10-19.md` |
-| 2個以上 | `YYYY-MM-DD_N.md` | `2025-10-19_1.md`<br>`2025-10-19_2.md` |
+ファイルは都道府県・市区町村ごとのフォルダに保存されます：
+
+### フォルダ構造
+```
+data/
+├── 千葉県/
+│   ├── 松戸市/
+│   │   └── YYYY-MM-DD.md
+│   └── 柏市/
+│       └── YYYY-MM-DD.md
+└── 東京都/
+    └── 千代田区/
+        └── YYYY-MM-DD.md
+```
+
+### ファイル名
+- すべてのファイル: `YYYY-MM-DD.md` (日付ベース)
+- 同じ日に同じ地域の複数URLを処理する場合、既存ファイルが上書きされます
+
+### 場所の抽出
+URLから都道府県コードと市区町村コードを抽出します：
+- 例: `https://sumstock.jp/search/02/12/12207`
+  - 都道府県コード: `12` → `千葉県`
+  - 市区町村コード: `12207` → `松戸市`
+  - 保存先: `data/千葉県/松戸市/YYYY-MM-DD.md`
 
 ## 制限事項と注意点
 
