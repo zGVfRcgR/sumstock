@@ -152,6 +152,7 @@ def scrape_property_data(url: str) -> List[Dict]:
                         
                         # Map labels to standardized keys using normalized text
                         # Use component matching since whitespace has been normalized
+                        # Note: '総額' is a complete term (total price), while others need both components
                         if '総額' in label:
                             prices_dict['total'] = value
                         elif '建物' in label and '価格' in label:
