@@ -151,11 +151,12 @@ def scrape_property_data(url: str) -> List[Dict]:
                         value = bold_elem.get_text().replace('万円', '').strip()
                         
                         # Map labels to standardized keys using normalized text
-                        if '総額' == label or '総額' in label:
+                        # Use component matching since whitespace has been normalized
+                        if '総額' in label:
                             prices_dict['total'] = value
-                        elif '建物価格' in label or ('建物' in label and '価格' in label):
+                        elif '建物' in label and '価格' in label:
                             prices_dict['building'] = value
-                        elif '土地価格' in label or ('土地' in label and '価格' in label):
+                        elif '土地' in label and '価格' in label:
                             prices_dict['land'] = value
                 
                 # Fallback: If label-based extraction didn't work, try extracting all .bold elements
@@ -197,9 +198,10 @@ def scrape_property_data(url: str) -> List[Dict]:
                         value = value_elem.get_text().replace('m²', '').replace('㎡', '').strip()
                         
                         # Map labels to standardized keys using normalized text
-                        if '建物面積' in label or ('建物' in label and '面積' in label):
+                        # Use component matching since whitespace has been normalized
+                        if '建物' in label and '面積' in label:
                             areas_dict['building'] = value
-                        elif '土地面積' in label or ('土地' in label and '面積' in label):
+                        elif '土地' in label and '面積' in label:
                             areas_dict['land'] = value
                 
                 # Fallback: If label-based extraction didn't work, try extracting all .value elements
