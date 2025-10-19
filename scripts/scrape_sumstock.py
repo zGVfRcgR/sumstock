@@ -113,6 +113,9 @@ def scrape_property_data(url: str) -> List[Dict]:
                     'maker': '-'
                 }
                 
+                # Get item text once for efficiency
+                item_text = item.get_text()
+                
                 # Try to extract location
                 # First try SumStock-specific h5.bukkenName element
                 location_elem = item.select_one('h5.bukkenName')
@@ -125,7 +128,6 @@ def scrape_property_data(url: str) -> List[Dict]:
                         re.compile(r'[市区町村].*?[0-9０-９]'),
                     ]
                     
-                    item_text = item.get_text()
                     for pattern in location_patterns:
                         match = pattern.search(item_text)
                         if match:
@@ -134,7 +136,6 @@ def scrape_property_data(url: str) -> List[Dict]:
                 
                 # Try to find price elements
                 # First try SumStock-specific .bold elements
-                item_text = item.get_text()
                 bold_price_elems = item.select('span.bold')
                 prices = []
                 if bold_price_elems:

@@ -31,11 +31,11 @@ MOCK_SUMSTOCK_HTML = """
         </div>
         <div class="area">
             <span class="label">建物面積</span>
-            <span class="value">112.85m²</span>
+            <span class="value">112.85</span>
         </div>
         <div class="area">
             <span class="label">土地面積</span>
-            <span class="value">151.45m²</span>
+            <span class="value">151.45</span>
         </div>
         <div class="maker">積水ハウス</div>
     </div>
@@ -55,11 +55,11 @@ MOCK_SUMSTOCK_HTML = """
         </div>
         <div class="area">
             <span class="label">建物面積</span>
-            <span class="value">105.32m²</span>
+            <span class="value">105.32</span>
         </div>
         <div class="area">
             <span class="label">土地面積</span>
-            <span class="value">140.50m²</span>
+            <span class="value">140.50</span>
         </div>
         <div class="maker">ダイワハウス</div>
     </div>
