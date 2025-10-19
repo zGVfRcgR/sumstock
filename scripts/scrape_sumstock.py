@@ -68,8 +68,11 @@ def scrape_property_data(url: str) -> List[Dict]:
         properties = []
         
         # Try multiple selectors to find property listings
-        # Common patterns for property listing sites
+        # SumStock-specific selectors first, then common patterns for property listing sites
         selectors = [
+            'div.bukkenUnitBox',
+            'article.bukkenListWrap .bukkenUnitBox',
+            '.bukkenUnitBox',
             'div.property-item',
             'div.property-card',
             'div.property',
@@ -110,26 +113,58 @@ def scrape_property_data(url: str) -> List[Dict]:
                     'maker': '-'
                 }
                 
-                # Try to extract location
-                location_patterns = [
-                    re.compile(r'[都道府県][市区町村].*?[0-9０-９]+丁目'),
-                    re.compile(r'[市区町村].*?[0-9０-９]'),
-                ]
-                
+                # Get item text once for efficiency
                 item_text = item.get_text()
-                for pattern in location_patterns:
-                    match = pattern.search(item_text)
-                    if match:
-                        property_data['location'] = match.group(0).strip()
-                        break
+                
+                # Try to extract location
+                # First try SumStock-specific h5.bukkenName element
+                location_elem = item.select_one('h5.bukkenName')
+                if location_elem:
+                    property_data['location'] = location_elem.get_text().strip()
+                else:
+                    # Fallback to regex patterns
+                    location_patterns = [
+                        re.compile(r'[都道府県][市区町村].*?[0-9０-９]+丁目'),
+                        re.compile(r'[市区町村].*?[0-9０-９]'),
+                    ]
+                    
+                    for pattern in location_patterns:
+                        match = pattern.search(item_text)
+                        if match:
+                            property_data['location'] = match.group(0).strip()
+                            break
                 
                 # Try to find price elements
-                price_pattern = re.compile(r'([0-9,]+)\s*万円')
-                prices = price_pattern.findall(item_text)
+                # First try SumStock-specific .bold elements
+                bold_price_elems = item.select('span.bold')
+                prices = []
+                if bold_price_elems:
+                    for elem in bold_price_elems:
+                        # Extract text and remove 万円 and get just the number
+                        text = elem.get_text().replace('万円', '').strip()
+                        if text:
+                            prices.append(text)
+                
+                # Fallback to regex pattern if no .bold elements found
+                if not prices:
+                    price_pattern = re.compile(r'([0-9,]+)\s*万円')
+                    prices = price_pattern.findall(item_text)
                 
                 # Try to find area elements
-                area_pattern = re.compile(r'([0-9.]+)\s*[m²㎡]')
-                areas = area_pattern.findall(item_text)
+                # First try SumStock-specific .value elements within .area divs
+                area_elems = item.select('.area .value')
+                areas = []
+                if area_elems:
+                    for elem in area_elems:
+                        # Extract text and remove m² symbols
+                        text = elem.get_text().replace('m²', '').replace('㎡', '').strip()
+                        if text:
+                            areas.append(text)
+                
+                # Fallback to regex pattern if no .value elements found
+                if not areas:
+                    area_pattern = re.compile(r'([0-9.]+)\s*[m²㎡]')
+                    areas = area_pattern.findall(item_text)
                 
                 # Process prices (typically: total, building, land)
                 if len(prices) >= 1:
