@@ -13,15 +13,21 @@ from typing import List, Dict, Optional
 import requests
 from bs4 import BeautifulSoup
 
+# Import location mapping functions
+try:
+    from location_mapping import parse_url_location
+except ImportError:
+    # Fallback if running from different directory
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from location_mapping import parse_url_location
 
-def extract_url_from_issue(issue_body: str) -> Optional[str]:
-    """Extract SumStock URL from issue body"""
+
+def extract_urls_from_issue(issue_body: str) -> List[str]:
+    """Extract all SumStock URLs from issue body"""
     # Look for SumStock URLs in the issue body
     url_pattern = r'https://sumstock\.jp/search/\d+/\d+/\d+'
-    match = re.search(url_pattern, issue_body)
-    if match:
-        return match.group(0)
-    return None
+    matches = re.findall(url_pattern, issue_body)
+    return matches
 
 
 def parse_price(price_str: str) -> Optional[float]:
@@ -311,10 +317,25 @@ nav_order: {date.strftime('%Y%m%d')}
     return markdown
 
 
-def save_markdown_file(markdown: str, date: datetime, output_dir: str = 'data'):
-    """Save Markdown content to file"""
+def save_markdown_file(markdown: str, date: datetime, output_dir: str = 'data', suffix: str = '', url: str = ''):
+    """Save Markdown content to file
+    
+    Args:
+        markdown: Markdown content to save
+        date: Date for filename
+        output_dir: Output directory path
+        suffix: Optional suffix for filename (e.g., '_1', '_2')
+        url: Optional URL to extract location information for folder structure
+    """
+    # If URL is provided, extract location and create folder structure
+    if url:
+        pref_code, pref_name, city_code, city_name = parse_url_location(url)
+        # Create folder structure: data/prefecture/city/
+        # Always create folders even for unknown locations (その他)
+        output_dir = os.path.join(output_dir, pref_name, city_name)
+    
     os.makedirs(output_dir, exist_ok=True)
-    filename = date.strftime('%Y-%m-%d.md')
+    filename = date.strftime('%Y-%m-%d') + suffix + '.md'
     filepath = os.path.join(output_dir, filename)
     
     with open(filepath, 'w', encoding='utf-8') as f:
@@ -326,42 +347,61 @@ def save_markdown_file(markdown: str, date: datetime, output_dir: str = 'data'):
 
 def main():
     """Main function"""
-    # Get issue body from environment variable or argument
+    # Get issue body from environment variable
     issue_body = os.environ.get('ISSUE_BODY', '')
     
+    # Determine URLs to process
     if len(sys.argv) > 1:
-        url = sys.argv[1]
+        # Use command-line arguments
+        urls = sys.argv[1:]
     else:
-        url = extract_url_from_issue(issue_body)
+        # Extract from issue body
+        urls = extract_urls_from_issue(issue_body)
     
-    if not url:
+    if not urls:
         print("Error: No SumStock URL found. Please provide URL as argument or in ISSUE_BODY environment variable.", file=sys.stderr)
         sys.exit(1)
     
-    print(f"Scraping data from: {url}")
-    
-    # Scrape data
-    properties = scrape_property_data(url)
-    
-    if not properties:
-        print("Warning: No property data found. Creating file with empty data.", file=sys.stderr)
+    print(f"Found {len(urls)} URL(s) to process")
     
     # Get current date
     current_date = datetime.now()
     
-    # Format as Markdown
-    markdown = format_markdown(properties, url, current_date)
+    # Track all created file paths
+    filepaths = []
     
-    # Save to file
-    filepath = save_markdown_file(markdown, current_date)
+    # Process each URL
+    for i, url in enumerate(urls, start=1):
+        print(f"\n[{i}/{len(urls)}] Scraping data from: {url}")
+        
+        # Scrape data
+        properties = scrape_property_data(url)
+        
+        if not properties:
+            print(f"Warning: No property data found for URL {i}. Creating file with empty data.", file=sys.stderr)
+        
+        # Format as Markdown
+        markdown = format_markdown(properties, url, current_date)
+        
+        # Save to file with location-based folder structure
+        # No suffix needed when using location folders (each location gets its own folder)
+        filepath = save_markdown_file(markdown, current_date, url=url)
+        filepaths.append(filepath)
+        
+        print(f"Successfully processed {len(properties)} properties from URL {i}")
     
-    print(f"Successfully processed {len(properties)} properties")
+    # Summary
+    print(f"\n=== Summary ===")
+    print(f"Total URLs processed: {len(urls)}")
+    print(f"Total files created: {len(filepaths)}")
     
     # Output filepath for GitHub Actions
     if os.environ.get('GITHUB_OUTPUT'):
         with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-            f.write(f"filepath={filepath}\n")
+            # Output comma-separated file paths
+            f.write(f"filepath={','.join(filepaths)}\n")
             f.write(f"date={current_date.strftime('%Y-%m-%d')}\n")
+            f.write(f"count={len(filepaths)}\n")
 
 
 if __name__ == '__main__':
