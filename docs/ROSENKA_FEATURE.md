@@ -108,17 +108,19 @@ python scripts/scrape_sumstock.py https://sumstock.jp/search/02/12/12207
 ### プログラムからの使用 (Programmatic Usage)
 
 ```python
-from scripts.rosenka import get_rosenka_for_property, calculate_rosenka_ratio
+from rosenka import get_rosenka_for_property, calculate_rosenka_ratio
 
 # 路線価の取得
 location = "松戸市中金杉1丁目"
 rosenka = get_rosenka_for_property(location)
-print(f"路線価: {rosenka}万円/m²")
+if rosenka:
+    print(f"路線価: {rosenka}万円/m²")
 
 # 倍率の計算
 building_unit_price = "約9.34万円/m²"
 ratio = calculate_rosenka_ratio(building_unit_price, rosenka)
-print(f"路線価倍率: {ratio:.2f}x")
+if ratio:
+    print(f"路線価倍率: {ratio:.2f}x")
 ```
 
 ## 制限事項と今後の拡張 (Limitations and Future Extensions)
