@@ -42,7 +42,7 @@ footer_content: "Copyright &copy; 2025. Distributed by an <a href=\"https://gith
 color_scheme: light
 
 # Google Analytics Tracking (optional)
-# ga_tracking: UA-XXXXXXXX-X
+ga_tracking: G-H4R3F2S52Z
 
 # Makes Aux links open in a new tab. Default is false
 aux_links_new_tab: true
