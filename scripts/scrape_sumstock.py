@@ -16,10 +16,12 @@ from bs4 import BeautifulSoup
 # Import location mapping functions
 try:
     from location_mapping import parse_url_location
+    from rosenka import get_rosenka_for_property, calculate_rosenka_ratio
 except ImportError:
     # Fallback if running from different directory
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     from location_mapping import parse_url_location
+    from rosenka import get_rosenka_for_property, calculate_rosenka_ratio
 
 
 def extract_urls_from_issue(issue_body: str) -> List[str]:
@@ -116,7 +118,9 @@ def scrape_property_data(url: str) -> List[Dict]:
                     'land_price': '-',
                     'land_area': '-',
                     'land_unit_price': '-',
-                    'maker': '-'
+                    'maker': '-',
+                    'rosenka_value': '-',
+                    'rosenka_ratio': '-'
                 }
                 
                 # Get item text once for efficiency
@@ -271,6 +275,17 @@ def scrape_property_data(url: str) -> List[Dict]:
                         property_data['maker'] = maker
                         break
                 
+                # Get rosenka value and calculate ratio
+                if property_data['location'] != '不明':
+                    rosenka_value = get_rosenka_for_property(property_data['location'])
+                    if rosenka_value is not None:
+                        property_data['rosenka_value'] = f"{rosenka_value:.2f}万円/m²"
+                        
+                        # Calculate rosenka ratio (building unit price / rosenka)
+                        ratio = calculate_rosenka_ratio(property_data['building_unit_price'], rosenka_value)
+                        if ratio is not None:
+                            property_data['rosenka_ratio'] = f"{ratio:.2f}x"
+                
                 # Only add if we found at least some data
                 if property_data['location'] != '不明' or prices_dict:
                     properties.append(property_data)
@@ -302,15 +317,15 @@ nav_order: {date.strftime('%Y%m%d')}
 ## 取得日: {date_str}
 ### 参照URL: [{url}]({url})
 
-| 所在地（町名） | 総額 | 建物価格 | 建物面積 | 建物単価（万円/m²） | 土地価格 | 土地面積 | 土地単価（万円/m²） | ハウスメーカー |
-|----------------|-------|------------|-------------|------------------------|------------|-------------|------------------------|----------------|
+| 所在地（町名） | 総額 | 建物価格 | 建物面積 | 建物単価（万円/m²） | 土地価格 | 土地面積 | 土地単価（万円/m²） | ハウスメーカー | 路線価（万円/m²） | 路線価倍率 |
+|----------------|-------|------------|-------------|------------------------|------------|-------------|------------------------|----------------|-------------------|------------|
 """
     
     if not properties:
-        markdown += "| データなし | - | - | - | - | - | - | - | - |\n"
+        markdown += "| データなし | - | - | - | - | - | - | - | - | - | - |\n"
     else:
         for prop in properties:
-            markdown += f"| {prop['location']} | {prop['total_price']} | {prop['building_price']} | {prop['building_area']} | {prop['building_unit_price']} | {prop['land_price']} | {prop['land_area']} | {prop['land_unit_price']} | {prop['maker']} |\n"
+            markdown += f"| {prop['location']} | {prop['total_price']} | {prop['building_price']} | {prop['building_area']} | {prop['building_unit_price']} | {prop['land_price']} | {prop['land_area']} | {prop['land_unit_price']} | {prop['maker']} | {prop['rosenka_value']} | {prop['rosenka_ratio']} |\n"
     
     markdown += "\n---\n\n**注意**: データは自動的に取得されます。\n"
     
