@@ -285,7 +285,6 @@ def scrape_property_data(url: str) -> List[Dict]:
                         land_unit_price_str = property_data.get('land_unit_price', '-')
                         if land_unit_price_str != '-' and land_unit_price_str.startswith('約'):
                             # Extract numeric value from "約XX.XX万円/m²"
-                            import re
                             match = re.search(r'約([0-9.]+)万円', land_unit_price_str)
                             if match:
                                 unit_price = float(match.group(1))
