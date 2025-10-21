@@ -16,10 +16,12 @@ from bs4 import BeautifulSoup
 # Import location mapping functions
 try:
     from location_mapping import parse_url_location
+    from land_price import get_land_price_info, calculate_ratio
 except ImportError:
     # Fallback if running from different directory
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     from location_mapping import parse_url_location
+    from land_price import get_land_price_info, calculate_ratio
 
 
 def extract_urls_from_issue(issue_body: str) -> List[str]:
@@ -116,6 +118,8 @@ def scrape_property_data(url: str) -> List[Dict]:
                     'land_price': '-',
                     'land_area': '-',
                     'land_unit_price': '-',
+                    'land_price_value': '-',
+                    'land_price_ratio': '-',
                     'maker': '-'
                 }
                 
@@ -271,6 +275,24 @@ def scrape_property_data(url: str) -> List[Dict]:
                         property_data['maker'] = maker
                         break
                 
+                # Fetch land price data from API
+                if property_data['location'] != '不明':
+                    land_price_val, land_price_fmt = get_land_price_info(property_data['location'])
+                    if land_price_val is not None and land_price_fmt is not None:
+                        property_data['land_price_value'] = land_price_fmt
+                        
+                        # Calculate ratio if we have land unit price
+                        land_unit_price_str = property_data.get('land_unit_price', '-')
+                        if land_unit_price_str != '-' and land_unit_price_str.startswith('約'):
+                            # Extract numeric value from "約XX.XX万円/m²"
+                            import re
+                            match = re.search(r'約([0-9.]+)万円', land_unit_price_str)
+                            if match:
+                                unit_price = float(match.group(1))
+                                ratio = calculate_ratio(unit_price, land_price_val)
+                                if ratio:
+                                    property_data['land_price_ratio'] = ratio
+                
                 # Only add if we found at least some data
                 if property_data['location'] != '不明' or prices_dict:
                     properties.append(property_data)
@@ -302,15 +324,15 @@ nav_order: {date.strftime('%Y%m%d')}
 ## 取得日: {date_str}
 ### 参照URL: [{url}]({url})
 
-| 所在地（町名） | 総額 | 建物価格 | 建物面積 | 建物単価（万円/m²） | 土地価格 | 土地面積 | 土地単価（万円/m²） | ハウスメーカー |
-|----------------|-------|------------|-------------|------------------------|------------|-------------|------------------------|----------------|
+| 所在地（町名） | 総額 | 建物価格 | 建物面積 | 建物単価（万円/m²） | 土地価格 | 土地面積 | 土地単価（万円/m²） | 地価（万円/m²） | 地価倍率 | ハウスメーカー |
+|----------------|-------|------------|-------------|------------------------|------------|-------------|------------------------|----------------|----------|----------------|
 """
     
     if not properties:
-        markdown += "| データなし | - | - | - | - | - | - | - | - |\n"
+        markdown += "| データなし | - | - | - | - | - | - | - | - | - | - |\n"
     else:
         for prop in properties:
-            markdown += f"| {prop['location']} | {prop['total_price']} | {prop['building_price']} | {prop['building_area']} | {prop['building_unit_price']} | {prop['land_price']} | {prop['land_area']} | {prop['land_unit_price']} | {prop['maker']} |\n"
+            markdown += f"| {prop['location']} | {prop['total_price']} | {prop['building_price']} | {prop['building_area']} | {prop['building_unit_price']} | {prop['land_price']} | {prop['land_area']} | {prop['land_unit_price']} | {prop['land_price_value']} | {prop['land_price_ratio']} | {prop['maker']} |\n"
     
     markdown += "\n---\n\n**注意**: データは自動的に取得されます。\n"
     
