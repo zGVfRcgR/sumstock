@@ -58,6 +58,7 @@ jobs:
       - name: Run scraper
         env:
           ISSUE_BODY: ${{ steps.get-issue.outputs.issue_body }}
+          REINFOLIB_API_KEY: ${{ secrets.REINFOLIB_API_KEY }}
         run: |
           if [ -n "${{ inputs.url }}" ]; then
             python scripts/scrape_sumstock.py "${{ inputs.url }}"
