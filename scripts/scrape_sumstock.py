@@ -18,11 +18,11 @@ from geopy.exc import GeocoderTimedOut, GeocoderUnavailable
 
 # Import location mapping functions
 try:
-    from location_mapping import PREFECTURE_MAP
+    from location_mapping import PREFECTURE_MAP, CITY_MAP
 except ImportError:
     # Fallback if running from different directory
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-    from location_mapping import PREFECTURE_MAP
+    from location_mapping import PREFECTURE_MAP, CITY_MAP
 
 # Import Real Estate API client
 try:
@@ -100,12 +100,27 @@ def get_location_from_api(address: str, api_client, url: str = '') -> tuple[str,
                 
                 data = api_client.get_point_data("geojson", 13, x, y, "2024")
                 if data and 'features' in data and data['features']:
-                    # Get location from first feature
-                    feature = data['features'][0]
-                    props = feature['properties']
-                    pref_name = props.get('prefecture_name_ja', 'その他')
-                    city_name = props.get('city_name_ja', 'その他')
-                    return pref_name, city_name
+                    # Find the closest feature to the geocoded coordinates
+                    closest_feature = None
+                    min_distance = float('inf')
+                    for feature in data['features']:
+                        geom = feature['geometry']
+                        if geom['type'] == 'Point':
+                            lon_feat, lat_feat = geom['coordinates']
+                            distance = math.sqrt((lat - lat_feat)**2 + (lon - lon_feat)**2)
+                            if distance < min_distance:
+                                min_distance = distance
+                                closest_feature = feature
+                    
+                    if closest_feature:
+                        props = closest_feature['properties']
+                        pref_name = props.get('prefecture_name_ja', 'その他')
+                        city_name = props.get('city_county_name_ja', 'その他')
+                        return pref_name, city_name
+                else:
+                    pass
+            else:
+                pass
         except Exception as e:
             print(f"Warning: Failed to get location from API for {address}: {e}", file=sys.stderr)
     
@@ -118,19 +133,34 @@ def parse_location_from_address(address: str, url: str = '') -> tuple[str, str]:
     if not address:
         return 'その他', 'その他'
     
-    # Get prefecture from URL if available
+def parse_location_from_address(address: str, url: str = '') -> tuple[str, str]:
+    """Parse prefecture and city from Japanese address string and URL"""
+    if not address:
+        return 'その他', 'その他'
+    
+    # Get prefecture and city from URL if available
     pref_name = 'その他'
+    city_name = 'その他'
     if url:
         try:
-            # Extract prefecture code from URL pattern: /search/region/prefecture/city
+            # Extract codes from URL pattern: /search/region/prefecture/city
             pattern = r'/search/(\d+)/(\d+)/(\d+)'
             match = re.search(pattern, url)
             if match:
                 pref_code = match.group(2)  # Middle number is prefecture
+                city_code = match.group(3)  # Last number is city
                 pref_name = PREFECTURE_MAP.get(pref_code.zfill(2), 'その他')
-        except:
+                # Get city name from CITY_MAP
+                pref_cities = CITY_MAP.get(pref_code.zfill(2), {})
+                city_name = pref_cities.get(city_code, 'その他')
+        except Exception as e:
             pass
     
+    # If we got location from URL, return it
+    if pref_name != 'その他' or city_name != 'その他':
+        return pref_name, city_name
+    
+    # Fallback: parse from address string
     # If prefecture not found in URL, try to find in address
     if pref_name == 'その他':
         prefectures = [
@@ -149,21 +179,21 @@ def parse_location_from_address(address: str, url: str = '') -> tuple[str, str]:
                 break
     
     # Extract city name from address
-    city_name = 'その他'
-    remaining = address
-    
-    # Remove prefecture if present
-    if pref_name != 'その他' and pref_name in remaining:
-        remaining = remaining.replace(pref_name, '', 1).strip()
-    
-    # Look for city name (市/区/町/村 until next 市/区/町/村 or space)
-    # Pattern: match from start until we hit another 市/区/町/村 or number/space
-    match = re.match(r'^(.+[市区町村])', remaining)
-    if match:
-        candidate = match.group(1).strip()
-        # Validate it's a reasonable city name
-        if len(candidate) >= 2 and len(candidate) <= 15 and any(suffix in candidate for suffix in ['区', '市', '町', '村']):
-            city_name = candidate
+    if city_name == 'その他':
+        remaining = address
+        
+        # Remove prefecture if present
+        if pref_name != 'その他' and pref_name in remaining:
+            remaining = remaining.replace(pref_name, '', 1).strip()
+        
+        # Look for city name (市/区/町/村 until next 市/区/町/村 or space)
+        # Pattern: match from start until we hit another 市/区/町/村 or number/space
+        match = re.match(r'^(.+[市区町村])', remaining)
+        if match:
+            candidate = match.group(1).strip()
+            # Validate it's a reasonable city name
+            if len(candidate) >= 2 and len(candidate) <= 15 and any(suffix in candidate for suffix in ['区', '市', '町', '村']):
+                city_name = candidate
     
     return pref_name, city_name
 
