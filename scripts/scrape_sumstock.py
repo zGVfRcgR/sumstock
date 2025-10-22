@@ -8,18 +8,28 @@ import os
 import sys
 import re
 import json
+import math
 from datetime import datetime
 from typing import List, Dict, Optional
 import requests
 from bs4 import BeautifulSoup
+from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderTimedOut, GeocoderUnavailable
 
 # Import location mapping functions
 try:
-    from location_mapping import parse_url_location
+    from location_mapping import PREFECTURE_MAP
 except ImportError:
     # Fallback if running from different directory
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-    from location_mapping import parse_url_location
+    from location_mapping import PREFECTURE_MAP
+
+# Import Real Estate API client
+try:
+    from real_estate_api import RealEstateInfoLibAPI
+except ImportError:
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from real_estate_api import RealEstateInfoLibAPI
 
 
 def extract_urls_from_issue(issue_body: str) -> List[str]:
@@ -54,6 +64,110 @@ def parse_area(area_str: str) -> Optional[float]:
         return None
 
 
+def deg2num(lat_deg: float, lon_deg: float, zoom: int) -> tuple[int, int]:
+    """Convert latitude/longitude to tile coordinates"""
+    lat_rad = math.radians(lat_deg)
+    n = 2.0 ** zoom
+    xtile = int((lon_deg + 180.0) / 360.0 * n)
+    ytile = int((1.0 - math.asinh(math.tan(lat_rad)) / math.pi) / 2.0 * n)
+    return (xtile, ytile)
+
+
+def geocode_address(address: str) -> Optional[tuple[float, float]]:
+    """Geocode address to latitude/longitude"""
+    try:
+        geolocator = Nominatim(user_agent="sumstock-scraper")
+        location = geolocator.geocode(address, timeout=10)
+        if location:
+            return (location.latitude, location.longitude)
+        return None
+    except (GeocoderTimedOut, GeocoderUnavailable):
+        return None
+
+
+def get_location_from_api(address: str, api_client, url: str = '') -> tuple[str, str]:
+    """Get prefecture and city name from address using Real Estate API or fallback parsing"""
+    if not address or address == '不明':
+        return 'その他', 'その他'
+    
+    # Try API first if available
+    if api_client:
+        try:
+            coords = geocode_address(address)
+            if coords:
+                lat, lon = coords
+                x, y = deg2num(lat, lon, 13)
+                
+                data = api_client.get_point_data("geojson", 13, x, y, "2024")
+                if data and 'features' in data and data['features']:
+                    # Get location from first feature
+                    feature = data['features'][0]
+                    props = feature['properties']
+                    pref_name = props.get('prefecture_name_ja', 'その他')
+                    city_name = props.get('city_name_ja', 'その他')
+                    return pref_name, city_name
+        except Exception as e:
+            print(f"Warning: Failed to get location from API for {address}: {e}", file=sys.stderr)
+    
+    # Fallback: parse location from address string and URL
+    return parse_location_from_address(address, url)
+
+
+def parse_location_from_address(address: str, url: str = '') -> tuple[str, str]:
+    """Parse prefecture and city from Japanese address string and URL"""
+    if not address:
+        return 'その他', 'その他'
+    
+    # Get prefecture from URL if available
+    pref_name = 'その他'
+    if url:
+        try:
+            # Extract prefecture code from URL pattern: /search/region/prefecture/city
+            pattern = r'/search/(\d+)/(\d+)/(\d+)'
+            match = re.search(pattern, url)
+            if match:
+                pref_code = match.group(2)  # Middle number is prefecture
+                pref_name = PREFECTURE_MAP.get(pref_code.zfill(2), 'その他')
+        except:
+            pass
+    
+    # If prefecture not found in URL, try to find in address
+    if pref_name == 'その他':
+        prefectures = [
+            '北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県',
+            '茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県',
+            '新潟県', '富山県', '石川県', '福井県', '山梨県', '長野県', '岐阜県',
+            '静岡県', '愛知県', '三重県', '滋賀県', '京都府', '大阪府', '兵庫県',
+            '奈良県', '和歌山県', '鳥取県', '島根県', '岡山県', '広島県', '山口県',
+            '徳島県', '香川県', '愛媛県', '高知県', '福岡県', '佐賀県', '長崎県',
+            '熊本県', '大分県', '宮崎県', '鹿児島県', '沖縄県'
+        ]
+        
+        for pref in prefectures:
+            if pref in address:
+                pref_name = pref
+                break
+    
+    # Extract city name from address
+    city_name = 'その他'
+    remaining = address
+    
+    # Remove prefecture if present
+    if pref_name != 'その他' and pref_name in remaining:
+        remaining = remaining.replace(pref_name, '', 1).strip()
+    
+    # Look for city name (市/区/町/村 until next 市/区/町/村 or space)
+    # Pattern: match from start until we hit another 市/区/町/村 or number/space
+    match = re.match(r'^(.+[市区町村])', remaining)
+    if match:
+        candidate = match.group(1).strip()
+        # Validate it's a reasonable city name
+        if len(candidate) >= 2 and len(candidate) <= 15 and any(suffix in candidate for suffix in ['区', '市', '町', '村']):
+            city_name = candidate
+    
+    return pref_name, city_name
+
+
 def calculate_unit_price(price: Optional[float], area: Optional[float]) -> Optional[float]:
     """Calculate unit price (price per m²)"""
     if price is None or area is None or area == 0:
@@ -63,6 +177,15 @@ def calculate_unit_price(price: Optional[float], area: Optional[float]) -> Optio
 
 def scrape_property_data(url: str) -> List[Dict]:
     """Scrape property data from SumStock URL"""
+    # Initialize API client for land price lookup
+    api_key = os.getenv("REINFOLIB_API_KEY")
+    api_client = None
+    if api_key:
+        try:
+            api_client = RealEstateInfoLibAPI(api_key)
+        except Exception as e:
+            print(f"Warning: Failed to initialize Real Estate API client: {e}", file=sys.stderr)
+    
     try:
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -116,7 +239,8 @@ def scrape_property_data(url: str) -> List[Dict]:
                     'land_price': '-',
                     'land_area': '-',
                     'land_unit_price': '-',
-                    'maker': '-'
+                    'maker': '-',
+                    'land_value': '-'
                 }
                 
                 # Get item text once for efficiency
@@ -176,12 +300,12 @@ def scrape_property_data(url: str) -> List[Dict]:
                         if t:
                             bold_prices.append(t)
 
-                    # If we have two bold prices, map them to building and land
+                    # If we have two bold prices, map them to building and land (land first, then building)
                     if len(bold_prices) >= 2:
-                        if 'building' not in prices_dict:
-                            prices_dict['building'] = bold_prices[0]
                         if 'land' not in prices_dict:
-                            prices_dict['land'] = bold_prices[1]
+                            prices_dict['land'] = bold_prices[0]
+                        if 'building' not in prices_dict:
+                            prices_dict['building'] = bold_prices[1]
 
                 if 'total' not in prices_dict or 'building' not in prices_dict or 'land' not in prices_dict:
                     # final fallback: regex against full item text (order-based: total, building, land)
@@ -262,6 +386,29 @@ def scrape_property_data(url: str) -> List[Dict]:
                         if unit_price:
                             property_data['land_unit_price'] = f"約{unit_price:.2f}万円/m²"
                 
+                # Calculate total price if missing or seems incorrect
+                if property_data['total_price'] == '-' and property_data['building_price'] != '-' and property_data['land_price'] != '-':
+                    try:
+                        building_val = parse_price(property_data['building_price'])
+                        land_val = parse_price(property_data['land_price'])
+                        if building_val is not None and land_val is not None:
+                            total_val = building_val + land_val
+                            property_data['total_price'] = f"{total_val:,.0f}万円"
+                    except:
+                        pass
+                elif property_data['total_price'] != '-' and property_data['building_price'] != '-' and property_data['land_price'] != '-':
+                    try:
+                        total_val = parse_price(property_data['total_price'])
+                        building_val = parse_price(property_data['building_price'])
+                        land_val = parse_price(property_data['land_price'])
+                        if total_val is not None and building_val is not None and land_val is not None:
+                            calculated_total = building_val + land_val
+                            # If the difference is significant (>10%), recalculate
+                            if abs(total_val - calculated_total) / calculated_total > 0.1:
+                                property_data['total_price'] = f"{calculated_total:,.0f}万円"
+                    except:
+                        pass
+                
                 # Try to find house maker
                 maker_patterns = ['積水ハウス', 'ダイワハウス', '大和ハウス', 'セキスイハイム', 
                                 'パナホーム', 'ミサワホーム', 'ヘーベルハウス', '住友林業', 
@@ -270,6 +417,42 @@ def scrape_property_data(url: str) -> List[Dict]:
                     if maker in item_text:
                         property_data['maker'] = maker
                         break
+                
+                # Get land value from Real Estate Information Library API
+                if api_client and property_data['location'] != '不明':
+                    try:
+                        coords = geocode_address(property_data['location'])
+                        if coords:
+                            lat, lon = coords
+                            x, y = deg2num(lat, lon, 13)
+                            tile_data = api_client.get_point_data("geojson", 13, x, y, "2024")
+                            if tile_data and 'features' in tile_data:
+                                # Find closest point
+                                min_distance = float('inf')
+                                closest_price = None
+                                for feature in tile_data['features']:
+                                    prop = feature['properties']
+                                    point_coords = feature['geometry']['coordinates']
+                                    point_lon, point_lat = point_coords[0], point_coords[1]
+                                    # Simple Euclidean distance (approx for small areas)
+                                    distance = math.sqrt((lat - point_lat)**2 + (lon - point_lon)**2)
+                                    if distance < min_distance:
+                                        min_distance = distance
+                                        price_str = prop.get('u_current_years_price_ja', '')
+                                        if price_str:
+                                            closest_price = price_str
+                                if closest_price:
+                                    # Convert from yen to man-yen (万円)
+                                    # closest_price is like "178,000(円/㎡)"
+                                    try:
+                                        yen_str = closest_price.replace(',', '').replace('(円/㎡)', '')
+                                        yen_value = int(yen_str)
+                                        man_yen = yen_value // 10000  # Convert to 万円
+                                        property_data['land_value'] = f"{man_yen}万円/㎡"
+                                    except (ValueError, AttributeError):
+                                        property_data['land_value'] = closest_price
+                    except Exception as e:
+                        print(f"Warning: Failed to get land value for {property_data['location']}: {e}", file=sys.stderr)
                 
                 # Only add if we found at least some data
                 if property_data['location'] != '不明' or prices_dict:
@@ -284,6 +467,9 @@ def scrape_property_data(url: str) -> List[Dict]:
     except requests.RequestException as e:
         print(f"Error fetching URL {url}: {e}", file=sys.stderr)
         return []
+    finally:
+        if api_client:
+            api_client.close()
 
 
 def format_markdown(properties: List[Dict], url: str, date: datetime) -> str:
@@ -302,37 +488,35 @@ nav_order: {date.strftime('%Y%m%d')}
 ## 取得日: {date_str}
 ### 参照URL: [{url}]({url})
 
-| 所在地（町名） | 総額 | 建物価格 | 建物面積 | 建物単価（万円/m²） | 土地価格 | 土地面積 | 土地単価（万円/m²） | ハウスメーカー |
-|----------------|-------|------------|-------------|------------------------|------------|-------------|------------------------|----------------|
+| 所在地（町名） | 総額 | 建物価格 | 建物面積 | 建物単価（万円/m²） | 土地価格 | 土地面積 | 土地単価（万円/m²） | ハウスメーカー | 公示地価（万円/㎡） |
+|----------------|-------|------------|-------------|------------------------|------------|-------------|------------------------|----------------|----------------|
 """
     
     if not properties:
-        markdown += "| データなし | - | - | - | - | - | - | - | - |\n"
+        markdown += "| データなし | - | - | - | - | - | - | - | - | - |\n"
     else:
         for prop in properties:
-            markdown += f"| {prop['location']} | {prop['total_price']} | {prop['building_price']} | {prop['building_area']} | {prop['building_unit_price']} | {prop['land_price']} | {prop['land_area']} | {prop['land_unit_price']} | {prop['maker']} |\n"
+            markdown += f"| {prop['location']} | {prop['total_price']} | {prop['building_price']} | {prop['building_area']} | {prop['building_unit_price']} | {prop['land_price']} | {prop['land_area']} | {prop['land_unit_price']} | {prop['maker']} | {prop['land_value']} |\n"
     
     markdown += "\n---\n\n**注意**: データは自動的に取得されます。\n"
     
     return markdown
 
 
-def save_markdown_file(markdown: str, date: datetime, output_dir: str = 'data', suffix: str = '', url: str = ''):
+def save_markdown_file(markdown: str, date: datetime, pref_name: str, city_name: str, output_dir: str = 'data', suffix: str = ''):
     """Save Markdown content to file
     
     Args:
         markdown: Markdown content to save
         date: Date for filename
+        pref_name: Prefecture name for folder structure
+        city_name: City name for folder structure
         output_dir: Output directory path
         suffix: Optional suffix for filename (e.g., '_1', '_2')
-        url: Optional URL to extract location information for folder structure
     """
-    # If URL is provided, extract location and create folder structure
-    if url:
-        pref_code, pref_name, city_code, city_name = parse_url_location(url)
-        # Create folder structure: data/prefecture/city/
-        # Always create folders even for unknown locations (その他)
-        output_dir = os.path.join(output_dir, pref_name, city_name)
+    # Create folder structure: data/prefecture/city/
+    # Always create folders even for unknown locations (その他)
+    output_dir = os.path.join(output_dir, pref_name, city_name)
     
     os.makedirs(output_dir, exist_ok=True)
     filename = date.strftime('%Y-%m-%d') + suffix + '.md'
@@ -347,6 +531,13 @@ def save_markdown_file(markdown: str, date: datetime, output_dir: str = 'data', 
 
 def main():
     """Main function"""
+    # Initialize API client
+    api_key = os.environ.get('REAL_ESTATE_API_KEY', '')
+    if api_key:
+        api_client = RealEstateInfoLibAPI(api_key)
+    else:
+        api_client = None
+    
     # Get issue body from environment variable
     issue_body = os.environ.get('ISSUE_BODY', '')
     
@@ -380,12 +571,19 @@ def main():
         if not properties:
             print(f"Warning: No property data found for URL {i}. Creating file with empty data.", file=sys.stderr)
         
+        # Get location from first property using API or address parsing
+        if properties:
+            first_location = properties[0].get('location', '')
+            pref_name, city_name = get_location_from_api(first_location, api_client, url)
+        else:
+            pref_name, city_name = 'その他', 'その他'
+        
         # Format as Markdown
         markdown = format_markdown(properties, url, current_date)
         
         # Save to file with location-based folder structure
         # No suffix needed when using location folders (each location gets its own folder)
-        filepath = save_markdown_file(markdown, current_date, url=url)
+        filepath = save_markdown_file(markdown, current_date, pref_name, city_name)
         filepaths.append(filepath)
         
         print(f"Successfully processed {len(properties)} properties from URL {i}")
