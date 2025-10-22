@@ -532,7 +532,7 @@ def save_markdown_file(markdown: str, date: datetime, pref_name: str, city_name:
 def main():
     """Main function"""
     # Initialize API client
-    api_key = os.environ.get('REAL_ESTATE_API_KEY', '')
+    api_key = os.environ.get('REINFOLIB_API_KEY', '')
     if api_key:
         api_client = RealEstateInfoLibAPI(api_key)
     else:
