@@ -55,6 +55,7 @@ class RealEstateInfoLibAPI:
         "land_price": "XIT002",  # 地価公示・都道府県地価調査情報取得API
         "city_list": "XIT003",  # 都道府県内市区町村一覧取得API
         "appraisal_report": "XIT004",  # 鑑定評価書情報API
+        "point_data": "XPT002",  # 地価公示・地価調査のポイント（点）API
     }
     
     def __init__(self, api_key: str, timeout: int = 30):
@@ -254,6 +255,51 @@ class RealEstateInfoLibAPI:
         
         return self._make_request(self.API_TYPES["appraisal_report"], params)
     
+    def get_point_data(
+        self,
+        response_format: str,
+        z: int,
+        x: int,
+        y: int,
+        year: str,
+        priceClassification: Optional[str] = None,
+        useCategoryCode: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        地価公示・地価調査のポイント（点）データを取得
+        
+        Args:
+            response_format: 応答形式 ("geojson" or "pbf")
+            z: ズームレベル（縮尺）
+            x: タイル座標のX値
+            y: タイル座標のY値
+            year: 対象年（例: "2024"）
+            priceClassification: 地価情報区分コード（オプション、"0" or "1"）
+            useCategoryCode: 用途区分コード（オプション、例: "00,03,05"）
+        
+        Returns:
+            地価ポイントデータのJSONデータ（GeoJSON形式）
+        
+        例:
+            >>> api = RealEstateInfoLibAPI(api_key="your-key")
+            >>> data = api.get_point_data("geojson", 13, 7312, 3008, "2024")
+        """
+        params = {
+            "response_format": response_format,
+            "z": z,
+            "x": x,
+            "y": y,
+            "year": year,
+        }
+        
+        if priceClassification:
+            params["priceClassification"] = priceClassification
+        
+        if useCategoryCode:
+            params["useCategoryCode"] = useCategoryCode
+        
+        return self._make_request(self.API_TYPES["point_data"], params)
+    
     def close(self):
         """
         セッションをクローズ
@@ -267,3 +313,37 @@ class RealEstateInfoLibAPI:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """コンテキストマネージャー対応（with文で使用可能）"""
         self.close()
+
+
+if __name__ == "__main__":
+    import os
+    
+    # APIキーを環境変数から取得
+    api_key = os.getenv("REINFOLIB_API_KEY")
+    if not api_key:
+        print("エラー: REINFOLIB_API_KEY環境変数が設定されていません。")
+        exit(1)
+    
+    # APIクライアントを初期化
+    api = RealEstateInfoLibAPI(api_key)
+    
+    try:
+        # 地価公示・地価調査のポイントデータを取得（東京駅周辺の例）
+        # ズームレベル13, タイル座標は東京駅周辺の例
+        data = api.get_point_data(
+            response_format="geojson",
+            z=13,
+            x=7312,
+            y=3008,
+            year="2024"
+        )
+        
+        print("APIレスポンス:")
+        print(json.dumps(data, indent=2, ensure_ascii=False))
+        
+    except RealEstateInfoLibAPIError as e:
+        print(f"APIエラー: {e}")
+    except Exception as e:
+        print(f"予期せぬエラー: {e}")
+    finally:
+        api.close()

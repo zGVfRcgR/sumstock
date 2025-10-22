@@ -8,10 +8,13 @@ import os
 import sys
 import re
 import json
+import math
 from datetime import datetime
 from typing import List, Dict, Optional
 import requests
 from bs4 import BeautifulSoup
+from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderTimedOut, GeocoderUnavailable
 
 # Import location mapping functions
 try:
@@ -20,6 +23,13 @@ except ImportError:
     # Fallback if running from different directory
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     from location_mapping import parse_url_location
+
+# Import Real Estate API client
+try:
+    from real_estate_api import RealEstateInfoLibAPI
+except ImportError:
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from real_estate_api import RealEstateInfoLibAPI
 
 
 def extract_urls_from_issue(issue_body: str) -> List[str]:
@@ -54,6 +64,27 @@ def parse_area(area_str: str) -> Optional[float]:
         return None
 
 
+def deg2num(lat_deg: float, lon_deg: float, zoom: int) -> tuple[int, int]:
+    """Convert latitude/longitude to tile coordinates"""
+    lat_rad = math.radians(lat_deg)
+    n = 2.0 ** zoom
+    xtile = int((lon_deg + 180.0) / 360.0 * n)
+    ytile = int((1.0 - math.asinh(math.tan(lat_rad)) / math.pi) / 2.0 * n)
+    return (xtile, ytile)
+
+
+def geocode_address(address: str) -> Optional[tuple[float, float]]:
+    """Geocode address to latitude/longitude"""
+    try:
+        geolocator = Nominatim(user_agent="sumstock-scraper")
+        location = geolocator.geocode(address, timeout=10)
+        if location:
+            return (location.latitude, location.longitude)
+        return None
+    except (GeocoderTimedOut, GeocoderUnavailable):
+        return None
+
+
 def calculate_unit_price(price: Optional[float], area: Optional[float]) -> Optional[float]:
     """Calculate unit price (price per m²)"""
     if price is None or area is None or area == 0:
@@ -63,6 +94,15 @@ def calculate_unit_price(price: Optional[float], area: Optional[float]) -> Optio
 
 def scrape_property_data(url: str) -> List[Dict]:
     """Scrape property data from SumStock URL"""
+    # Initialize API client for land price lookup
+    api_key = os.getenv("REINFOLIB_API_KEY")
+    api_client = None
+    if api_key:
+        try:
+            api_client = RealEstateInfoLibAPI(api_key)
+        except Exception as e:
+            print(f"Warning: Failed to initialize Real Estate API client: {e}", file=sys.stderr)
+    
     try:
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -116,7 +156,8 @@ def scrape_property_data(url: str) -> List[Dict]:
                     'land_price': '-',
                     'land_area': '-',
                     'land_unit_price': '-',
-                    'maker': '-'
+                    'maker': '-',
+                    'land_value': '-'
                 }
                 
                 # Get item text once for efficiency
@@ -271,6 +312,42 @@ def scrape_property_data(url: str) -> List[Dict]:
                         property_data['maker'] = maker
                         break
                 
+                # Get land value from Real Estate Information Library API
+                if api_client and property_data['location'] != '不明':
+                    try:
+                        coords = geocode_address(property_data['location'])
+                        if coords:
+                            lat, lon = coords
+                            x, y = deg2num(lat, lon, 13)
+                            tile_data = api_client.get_point_data("geojson", 13, x, y, "2024")
+                            if tile_data and 'features' in tile_data:
+                                # Find closest point
+                                min_distance = float('inf')
+                                closest_price = None
+                                for feature in tile_data['features']:
+                                    prop = feature['properties']
+                                    point_coords = feature['geometry']['coordinates']
+                                    point_lon, point_lat = point_coords[0], point_coords[1]
+                                    # Simple Euclidean distance (approx for small areas)
+                                    distance = math.sqrt((lat - point_lat)**2 + (lon - point_lon)**2)
+                                    if distance < min_distance:
+                                        min_distance = distance
+                                        price_str = prop.get('u_current_years_price_ja', '')
+                                        if price_str:
+                                            closest_price = price_str
+                                if closest_price:
+                                    # Convert from yen to man-yen (万円)
+                                    # closest_price is like "178,000(円/㎡)"
+                                    try:
+                                        yen_str = closest_price.replace(',', '').replace('(円/㎡)', '')
+                                        yen_value = int(yen_str)
+                                        man_yen = yen_value // 10000  # Convert to 万円
+                                        property_data['land_value'] = f"{man_yen}万円/㎡"
+                                    except (ValueError, AttributeError):
+                                        property_data['land_value'] = closest_price
+                    except Exception as e:
+                        print(f"Warning: Failed to get land value for {property_data['location']}: {e}", file=sys.stderr)
+                
                 # Only add if we found at least some data
                 if property_data['location'] != '不明' or prices_dict:
                     properties.append(property_data)
@@ -284,6 +361,9 @@ def scrape_property_data(url: str) -> List[Dict]:
     except requests.RequestException as e:
         print(f"Error fetching URL {url}: {e}", file=sys.stderr)
         return []
+    finally:
+        if api_client:
+            api_client.close()
 
 
 def format_markdown(properties: List[Dict], url: str, date: datetime) -> str:
@@ -302,15 +382,15 @@ nav_order: {date.strftime('%Y%m%d')}
 ## 取得日: {date_str}
 ### 参照URL: [{url}]({url})
 
-| 所在地（町名） | 総額 | 建物価格 | 建物面積 | 建物単価（万円/m²） | 土地価格 | 土地面積 | 土地単価（万円/m²） | ハウスメーカー |
-|----------------|-------|------------|-------------|------------------------|------------|-------------|------------------------|----------------|
+| 所在地（町名） | 総額 | 建物価格 | 建物面積 | 建物単価（万円/m²） | 土地価格 | 土地面積 | 土地単価（万円/m²） | ハウスメーカー | 公示地価（万円/㎡） |
+|----------------|-------|------------|-------------|------------------------|------------|-------------|------------------------|----------------|----------------|
 """
     
     if not properties:
-        markdown += "| データなし | - | - | - | - | - | - | - | - |\n"
+        markdown += "| データなし | - | - | - | - | - | - | - | - | - |\n"
     else:
         for prop in properties:
-            markdown += f"| {prop['location']} | {prop['total_price']} | {prop['building_price']} | {prop['building_area']} | {prop['building_unit_price']} | {prop['land_price']} | {prop['land_area']} | {prop['land_unit_price']} | {prop['maker']} |\n"
+            markdown += f"| {prop['location']} | {prop['total_price']} | {prop['building_price']} | {prop['building_area']} | {prop['building_unit_price']} | {prop['land_price']} | {prop['land_area']} | {prop['land_unit_price']} | {prop['maker']} | {prop['land_value']} |\n"
     
     markdown += "\n---\n\n**注意**: データは自動的に取得されます。\n"
     
