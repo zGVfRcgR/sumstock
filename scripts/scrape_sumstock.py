@@ -156,19 +156,14 @@ def parse_location_from_address(address: str, url: str = '') -> tuple[str, str]:
     if pref_name != 'その他' and pref_name in remaining:
         remaining = remaining.replace(pref_name, '', 1).strip()
     
-    # Look for common city patterns
-    city_patterns = [
-        r'^([^市区町村]+[市区町村])',  # Match until next 区/市/町/村
-        r'^([^0-9]+)',  # Match until numbers
-    ]
-    for pattern in city_patterns:
-        match = re.search(pattern, remaining)
-        if match:
-            candidate = match.group(1).strip()
-            # Validate it's a reasonable city name (contains 市区町村 and not too long)
-            if any(suffix in candidate for suffix in ['区', '市', '町', '村']) and len(candidate) <= 20:
-                city_name = candidate
-                break
+    # Look for city name (市/区/町/村 until next 市/区/町/村 or space)
+    # Pattern: match from start until we hit another 市/区/町/村 or number/space
+    match = re.match(r'^(.+[市区町村])', remaining)
+    if match:
+        candidate = match.group(1).strip()
+        # Validate it's a reasonable city name
+        if len(candidate) >= 2 and len(candidate) <= 15 and any(suffix in candidate for suffix in ['区', '市', '町', '村']):
+            city_name = candidate
     
     return pref_name, city_name
 
@@ -305,12 +300,12 @@ def scrape_property_data(url: str) -> List[Dict]:
                         if t:
                             bold_prices.append(t)
 
-                    # If we have two bold prices, map them to building and land
+                    # If we have two bold prices, map them to building and land (land first, then building)
                     if len(bold_prices) >= 2:
-                        if 'building' not in prices_dict:
-                            prices_dict['building'] = bold_prices[0]
                         if 'land' not in prices_dict:
-                            prices_dict['land'] = bold_prices[1]
+                            prices_dict['land'] = bold_prices[0]
+                        if 'building' not in prices_dict:
+                            prices_dict['building'] = bold_prices[1]
 
                 if 'total' not in prices_dict or 'building' not in prices_dict or 'land' not in prices_dict:
                     # final fallback: regex against full item text (order-based: total, building, land)
@@ -390,6 +385,29 @@ def scrape_property_data(url: str) -> List[Dict]:
                         unit_price = calculate_unit_price(land_price, land_area)
                         if unit_price:
                             property_data['land_unit_price'] = f"約{unit_price:.2f}万円/m²"
+                
+                # Calculate total price if missing or seems incorrect
+                if property_data['total_price'] == '-' and property_data['building_price'] != '-' and property_data['land_price'] != '-':
+                    try:
+                        building_val = parse_price(property_data['building_price'])
+                        land_val = parse_price(property_data['land_price'])
+                        if building_val is not None and land_val is not None:
+                            total_val = building_val + land_val
+                            property_data['total_price'] = f"{total_val:,.0f}万円"
+                    except:
+                        pass
+                elif property_data['total_price'] != '-' and property_data['building_price'] != '-' and property_data['land_price'] != '-':
+                    try:
+                        total_val = parse_price(property_data['total_price'])
+                        building_val = parse_price(property_data['building_price'])
+                        land_val = parse_price(property_data['land_price'])
+                        if total_val is not None and building_val is not None and land_val is not None:
+                            calculated_total = building_val + land_val
+                            # If the difference is significant (>10%), recalculate
+                            if abs(total_val - calculated_total) / calculated_total > 0.1:
+                                property_data['total_price'] = f"{calculated_total:,.0f}万円"
+                    except:
+                        pass
                 
                 # Try to find house maker
                 maker_patterns = ['積水ハウス', 'ダイワハウス', '大和ハウス', 'セキスイハイム', 
