@@ -18,11 +18,11 @@ from geopy.exc import GeocoderTimedOut, GeocoderUnavailable
 
 # Import location mapping functions
 try:
-    from location_mapping import parse_url_location
+    from location_mapping import PREFECTURE_MAP
 except ImportError:
     # Fallback if running from different directory
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-    from location_mapping import parse_url_location
+    from location_mapping import PREFECTURE_MAP
 
 # Import Real Estate API client
 try:
@@ -83,6 +83,94 @@ def geocode_address(address: str) -> Optional[tuple[float, float]]:
         return None
     except (GeocoderTimedOut, GeocoderUnavailable):
         return None
+
+
+def get_location_from_api(address: str, api_client, url: str = '') -> tuple[str, str]:
+    """Get prefecture and city name from address using Real Estate API or fallback parsing"""
+    if not address or address == '不明':
+        return 'その他', 'その他'
+    
+    # Try API first if available
+    if api_client:
+        try:
+            coords = geocode_address(address)
+            if coords:
+                lat, lon = coords
+                x, y = deg2num(lat, lon, 13)
+                
+                data = api_client.get_point_data("geojson", 13, x, y, "2024")
+                if data and 'features' in data and data['features']:
+                    # Get location from first feature
+                    feature = data['features'][0]
+                    props = feature['properties']
+                    pref_name = props.get('prefecture_name_ja', 'その他')
+                    city_name = props.get('city_name_ja', 'その他')
+                    return pref_name, city_name
+        except Exception as e:
+            print(f"Warning: Failed to get location from API for {address}: {e}", file=sys.stderr)
+    
+    # Fallback: parse location from address string and URL
+    return parse_location_from_address(address, url)
+
+
+def parse_location_from_address(address: str, url: str = '') -> tuple[str, str]:
+    """Parse prefecture and city from Japanese address string and URL"""
+    if not address:
+        return 'その他', 'その他'
+    
+    # Get prefecture from URL if available
+    pref_name = 'その他'
+    if url:
+        try:
+            # Extract prefecture code from URL pattern: /search/region/prefecture/city
+            pattern = r'/search/(\d+)/(\d+)/(\d+)'
+            match = re.search(pattern, url)
+            if match:
+                pref_code = match.group(2)  # Middle number is prefecture
+                pref_name = PREFECTURE_MAP.get(pref_code.zfill(2), 'その他')
+        except:
+            pass
+    
+    # If prefecture not found in URL, try to find in address
+    if pref_name == 'その他':
+        prefectures = [
+            '北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県',
+            '茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県',
+            '新潟県', '富山県', '石川県', '福井県', '山梨県', '長野県', '岐阜県',
+            '静岡県', '愛知県', '三重県', '滋賀県', '京都府', '大阪府', '兵庫県',
+            '奈良県', '和歌山県', '鳥取県', '島根県', '岡山県', '広島県', '山口県',
+            '徳島県', '香川県', '愛媛県', '高知県', '福岡県', '佐賀県', '長崎県',
+            '熊本県', '大分県', '宮崎県', '鹿児島県', '沖縄県'
+        ]
+        
+        for pref in prefectures:
+            if pref in address:
+                pref_name = pref
+                break
+    
+    # Extract city name from address
+    city_name = 'その他'
+    remaining = address
+    
+    # Remove prefecture if present
+    if pref_name != 'その他' and pref_name in remaining:
+        remaining = remaining.replace(pref_name, '', 1).strip()
+    
+    # Look for common city patterns
+    city_patterns = [
+        r'^([^市区町村]+[市区町村])',  # Match until next 区/市/町/村
+        r'^([^0-9]+)',  # Match until numbers
+    ]
+    for pattern in city_patterns:
+        match = re.search(pattern, remaining)
+        if match:
+            candidate = match.group(1).strip()
+            # Validate it's a reasonable city name (contains 市区町村 and not too long)
+            if any(suffix in candidate for suffix in ['区', '市', '町', '村']) and len(candidate) <= 20:
+                city_name = candidate
+                break
+    
+    return pref_name, city_name
 
 
 def calculate_unit_price(price: Optional[float], area: Optional[float]) -> Optional[float]:
@@ -397,22 +485,20 @@ nav_order: {date.strftime('%Y%m%d')}
     return markdown
 
 
-def save_markdown_file(markdown: str, date: datetime, output_dir: str = 'data', suffix: str = '', url: str = ''):
+def save_markdown_file(markdown: str, date: datetime, pref_name: str, city_name: str, output_dir: str = 'data', suffix: str = ''):
     """Save Markdown content to file
     
     Args:
         markdown: Markdown content to save
         date: Date for filename
+        pref_name: Prefecture name for folder structure
+        city_name: City name for folder structure
         output_dir: Output directory path
         suffix: Optional suffix for filename (e.g., '_1', '_2')
-        url: Optional URL to extract location information for folder structure
     """
-    # If URL is provided, extract location and create folder structure
-    if url:
-        pref_code, pref_name, city_code, city_name = parse_url_location(url)
-        # Create folder structure: data/prefecture/city/
-        # Always create folders even for unknown locations (その他)
-        output_dir = os.path.join(output_dir, pref_name, city_name)
+    # Create folder structure: data/prefecture/city/
+    # Always create folders even for unknown locations (その他)
+    output_dir = os.path.join(output_dir, pref_name, city_name)
     
     os.makedirs(output_dir, exist_ok=True)
     filename = date.strftime('%Y-%m-%d') + suffix + '.md'
@@ -427,6 +513,13 @@ def save_markdown_file(markdown: str, date: datetime, output_dir: str = 'data', 
 
 def main():
     """Main function"""
+    # Initialize API client
+    api_key = os.environ.get('REAL_ESTATE_API_KEY', '')
+    if api_key:
+        api_client = RealEstateInfoLibAPI(api_key)
+    else:
+        api_client = None
+    
     # Get issue body from environment variable
     issue_body = os.environ.get('ISSUE_BODY', '')
     
@@ -460,12 +553,19 @@ def main():
         if not properties:
             print(f"Warning: No property data found for URL {i}. Creating file with empty data.", file=sys.stderr)
         
+        # Get location from first property using API or address parsing
+        if properties:
+            first_location = properties[0].get('location', '')
+            pref_name, city_name = get_location_from_api(first_location, api_client, url)
+        else:
+            pref_name, city_name = 'その他', 'その他'
+        
         # Format as Markdown
         markdown = format_markdown(properties, url, current_date)
         
         # Save to file with location-based folder structure
         # No suffix needed when using location folders (each location gets its own folder)
-        filepath = save_markdown_file(markdown, current_date, url=url)
+        filepath = save_markdown_file(markdown, current_date, pref_name, city_name)
         filepaths.append(filepath)
         
         print(f"Successfully processed {len(properties)} properties from URL {i}")
