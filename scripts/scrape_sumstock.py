@@ -11,6 +11,7 @@ import json
 import math
 from datetime import datetime
 from typing import List, Dict, Optional
+from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 from geopy.geocoders import Nominatim
@@ -62,6 +63,60 @@ def parse_area(area_str: str) -> Optional[float]:
         return float(area_str)
     except ValueError:
         return None
+
+
+def parse_manken_from_text(text: str) -> Optional[str]:
+    """Parse text containing Japanese price formats and return a formatted string like '12,000万円'.
+
+    Supports patterns like:
+    - '1億2,000万円' -> 12000万円
+    - '2,980万円' -> 2,980万円
+    - '12000万円' -> 12,000万円
+    Returns None if no price found.
+    """
+    if not text:
+        return None
+    s = re.sub(r'\s+', '', text)
+    # First try 'X億Y万円'
+    m = re.search(r'([0-9,]+)億([0-9,]+)万円', s)
+    if m:
+        try:
+            oku = int(m.group(1).replace(',', ''))
+            man = int(m.group(2).replace(',', ''))
+            total_manken = oku * 10000 + man
+            return f"{total_manken:,}万円"
+        except ValueError:
+            pass
+
+    # Try 'X億万円' (no additional man)
+    m2 = re.search(r'([0-9,]+)億万円', s)
+    if m2:
+        try:
+            oku = int(m2.group(1).replace(',', ''))
+            total_manken = oku * 10000
+            return f"{total_manken:,}万円"
+        except ValueError:
+            pass
+
+    # Try simple man-yen pattern: 'X,XXX万円' or 'XXXX万円'
+    m3 = re.search(r'([0-9,]+)万円', s)
+    if m3:
+        try:
+            val = int(m3.group(1).replace(',', ''))
+            return f"{val:,}万円"
+        except ValueError:
+            pass
+
+    # As a last resort, try to find any integer and treat it as man-yen
+    m4 = re.search(r'([0-9,]+)', s)
+    if m4:
+        try:
+            val = int(m4.group(1).replace(',', ''))
+            return f"{val:,}万円"
+        except ValueError:
+            pass
+
+    return None
 
 
 def deg2num(lat_deg: float, lon_deg: float, zoom: int) -> tuple[int, int]:
@@ -270,6 +325,7 @@ def scrape_property_data(url: str) -> List[Dict]:
                     'land_area': '-',
                     'land_unit_price': '-',
                     'maker': '-',
+                    'maker_image': '-',
                     'land_value': '-'
                 }
                 
@@ -299,13 +355,29 @@ def scrape_property_data(url: str) -> List[Dict]:
                 # - building/land: take from `div.priceItems` using label-aware regex
                 prices_dict = {}
 
-                # Total price: usually in div.price
-                total_elem = item.select_one('div.price')
-                if total_elem:
-                    total_text = total_elem.get_text(separator=' ', strip=True)
-                    m = re.search(r'([0-9,]+)\s*万円', total_text)
-                    if m:
-                        prices_dict['total'] = m.group(1)
+                # Price extraction: iterate over all div.price blocks and use labels when present
+                price_divs = item.select('div.price')
+                for pd in price_divs:
+                    try:
+                        pd_text = pd.get_text(separator='', strip=True)
+                        # Determine label if present
+                        label_elem = pd.select_one('.label')
+                        label_txt = label_elem.get_text(strip=True) if label_elem else ''
+                        parsed = parse_manken_from_text(pd_text)
+                        if not parsed:
+                            continue
+                        value_plain = parsed.replace('万円', '')
+                        if '総' in label_txt or '総額' in label_txt:
+                            prices_dict['total'] = value_plain
+                        elif '建物' in label_txt:
+                            prices_dict['building'] = value_plain
+                        elif '土地' in label_txt:
+                            prices_dict['land'] = value_plain
+                        else:
+                            # No explicit label: collect into a generic list for fallback
+                            prices_dict.setdefault('_unlabeled', []).append(value_plain)
+                    except Exception:
+                        continue
 
                 # Building / Land: try to parse from div.priceItems (label + number)
                 price_items_elem = item.select_one('div.priceItems')
@@ -326,21 +398,42 @@ def scrape_property_data(url: str) -> List[Dict]:
                     bold_price_elems = item.select('span.bold')
                     bold_prices = []
                     for elem in bold_price_elems:
-                        t = elem.get_text(separator='', strip=True).replace('万円', '')
-                        if t:
-                            bold_prices.append(t)
+                        t_raw = elem.get_text(separator='', strip=True)
+                        parsed = parse_manken_from_text(t_raw)
+                        if parsed:
+                            bold_prices.append(parsed.replace('万円', ''))
 
-                    # If we have two bold prices, map them to building and land (land first, then building)
+                    # If we have two bold prices, map them conservatively:
+                    # prefer to assign building and land if labels missing by position: assume order may be (total, building, land) or (building, land)
                     if len(bold_prices) >= 2:
-                        if 'land' not in prices_dict:
-                            prices_dict['land'] = bold_prices[0]
-                        if 'building' not in prices_dict:
-                            prices_dict['building'] = bold_prices[1]
+                        # If total is missing and there are 3 values, assume first is total
+                        if 'total' not in prices_dict and len(bold_prices) >= 3:
+                            prices_dict['total'] = bold_prices[0]
+                            # then building and land
+                            prices_dict.setdefault('building', bold_prices[1])
+                            prices_dict.setdefault('land', bold_prices[2])
+                        elif len(bold_prices) == 2:
+                            # two values: prefer building then land
+                            prices_dict.setdefault('building', bold_prices[0])
+                            prices_dict.setdefault('land', bold_prices[1])
+                        else:
+                            # fallback: if only one value, treat as total
+                            prices_dict.setdefault('total', bold_prices[0])
 
                 if 'total' not in prices_dict or 'building' not in prices_dict or 'land' not in prices_dict:
                     # final fallback: regex against full item text (order-based: total, building, land)
-                    price_pattern = re.compile(r'([0-9,]+)\s*万円')
-                    all_prices = price_pattern.findall(item_text)
+                    # final fallback: use the specialized parser to handle '億' fragments
+                    # Try to find any price-like fragment inside the item
+                    all_prices = []
+                    # Look for full patterns like 'X億Y万円' first
+                    for mfrag in re.finditer(r'[0-9,]+億[0-9,]+万円', item_text):
+                        parsed = parse_manken_from_text(mfrag.group(0))
+                        if parsed:
+                            all_prices.append(parsed.replace('万円', ''))
+                    if not all_prices:
+                        # fallback to simpler man-yen matches
+                        price_pattern = re.compile(r'([0-9,]+)\s*万円')
+                        all_prices = price_pattern.findall(item_text)
                     if all_prices:
                         if 'total' not in prices_dict and len(all_prices) >= 1:
                             prices_dict['total'] = all_prices[0]
@@ -447,6 +540,29 @@ def scrape_property_data(url: str) -> List[Dict]:
                     if maker in item_text:
                         property_data['maker'] = maker
                         break
+
+                # Try to extract maker image from an element with class 'maker' if present
+                try:
+                    maker_elem = item.select_one('.maker')
+                    img_url = None
+                    if maker_elem:
+                        img_tag = maker_elem.find('img')
+                        if img_tag and img_tag.get('src'):
+                            img_src = img_tag.get('src')
+                            # Resolve relative URLs against the page URL
+                            img_url = urljoin(response.url, img_src)
+                    # If we didn't find an explicit .maker img, try common alternatives
+                    if not img_url:
+                        # look for any img inside the item whose alt contains maker name
+                        if property_data['maker'] and property_data['maker'] != '-':
+                            alt_img = item.find('img', alt=re.compile(re.escape(property_data['maker'])))
+                            if alt_img and alt_img.get('src'):
+                                img_url = urljoin(response.url, alt_img.get('src'))
+                    if img_url:
+                        property_data['maker_image'] = img_url
+                except Exception:
+                    # Non-fatal; continue without maker image
+                    pass
                 
                 # Get land value from Real Estate Information Library API
                 if api_client and property_data['location'] != '不明':
@@ -502,15 +618,24 @@ def scrape_property_data(url: str) -> List[Dict]:
             api_client.close()
 
 
-def format_markdown(properties: List[Dict], url: str, date: datetime) -> str:
-    """Format property data as Markdown"""
+def format_markdown(properties: List[Dict], url: str, date: datetime, pref_name: str = 'その他', city_name: str = 'その他') -> str:
+    """Format property data as Markdown
+
+    nav_order will be set to "{pref_name} {city_name}" so pages are ordered/grouped
+    by prefecture and city in the site navigation.
+    """
     date_str = date.strftime('%Y年%m月%d日')
     
+    # Use categories (prefecture, city) and order (date) for Jekyll front-matter
+    date_filename = date.strftime('%Y%m%d')
+    order_value = int(date_filename)
+    # categories is a YAML list; order is numeric to help sorting in some themes
     markdown = f"""---
 layout: default
 title: {date.strftime('%Y-%m-%d')}
 parent: データ一覧
-nav_order: {date.strftime('%Y%m%d')}
+categories: [{pref_name}, {city_name}]
+order: {order_value}
 ---
 
 # スムストック物件データ
@@ -526,7 +651,14 @@ nav_order: {date.strftime('%Y%m%d')}
         markdown += "| データなし | - | - | - | - | - | - | - | - | - |\n"
     else:
         for prop in properties:
-            markdown += f"| {prop['location']} | {prop['total_price']} | {prop['building_price']} | {prop['building_area']} | {prop['building_unit_price']} | {prop['land_price']} | {prop['land_area']} | {prop['land_unit_price']} | {prop['maker']} | {prop['land_value']} |\n"
+            # If a maker image URL is present, render an inline image; otherwise render maker text
+            maker_cell = prop.get('maker', '-')
+            maker_img = prop.get('maker_image', '-')
+            if maker_img and maker_img != '-':
+                # Use HTML <img> to ensure sizing works in markdown renderers
+                maker_cell = f"<img src=\"{maker_img}\" alt=\"{prop.get('maker','')}\" style=\"height:32px;\">"
+
+            markdown += f"| {prop['location']} | {prop['total_price']} | {prop['building_price']} | {prop['building_area']} | {prop['building_unit_price']} | {prop['land_price']} | {prop['land_area']} | {prop['land_unit_price']} | {maker_cell} | {prop['land_value']} |\n"
     
     markdown += "\n---\n\n**注意**: データは自動的に取得されます。\n"
     
@@ -609,7 +741,7 @@ def main():
             pref_name, city_name = 'その他', 'その他'
         
         # Format as Markdown
-        markdown = format_markdown(properties, url, current_date)
+        markdown = format_markdown(properties, url, current_date, pref_name, city_name)
         
         # Save to file with location-based folder structure
         # No suffix needed when using location folders (each location gets its own folder)
