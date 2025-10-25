@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sumstock-demo
+  labels:
+    app: sumstock-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sumstock-demo
+  template:
+    metadata:
+      labels:
+        app: sumstock-demo
+    spec:
+      containers:
+        - name: web
+          # TODO: ここを実際のイメージに差し替えてください
+          image: nginx:stable
+          ports:
+            - containerPort: 80
