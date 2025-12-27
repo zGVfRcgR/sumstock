@@ -30,9 +30,13 @@ def extract_city_from_data(filepath):
     with open(filepath, 'r', encoding='utf-8') as f:
         content = f.read()
         # Find all location entries in the table (format: | 市川市... | or | 柏市... |)
-        matches = re.findall(r'\|\s*([^|]+市[^|]*)\s*\|', content)
+        # Skip table headers by checking for specific text
+        matches = re.findall(r'\|\s*([^|]+[市区町村][^|]*)\s*\|', content)
         for match in matches:
-            # Extract city name (市/区 suffix)
+            # Skip headers and metadata
+            if '所在地' in match or '町名' in match:
+                continue
+            # Extract city name (市/区/町/村 suffix)
             city_match = re.match(r'(.+?[市区町村])', match.strip())
             if city_match:
                 cities.add(city_match.group(1))
@@ -74,8 +78,18 @@ def validate_data_folder_structure():
             continue
         
         # Get expected city name from URL code
-        # For Chiba prefecture (千葉県), the prefecture code is '12'
-        pref_code = '12'  # Hardcoded for now, can be made dynamic
+        # Extract prefecture code from folder structure
+        pref_code_map = {
+            '千葉県': '12',
+            '東京都': '13',
+            '埼玉県': '11',
+            '神奈川県': '14',
+        }
+        pref_code = pref_code_map.get(folder_pref, None)
+        if not pref_code:
+            # Skip validation for prefectures not in our mapping
+            continue
+        
         url_city_name = get_city_name_from_code(pref_code, url_city_code)
         
         # Extract actual cities from data
@@ -90,8 +104,9 @@ def validate_data_folder_structure():
         
         # Validate: data should be for the same city as folder
         if data_cities:
-            mismatched_cities = [city for city in data_cities if folder_city not in city]
-            if mismatched_cities and len(mismatched_cities) == len(data_cities):
+            # Check if any data city matches the folder city exactly
+            has_matching_city = any(city == folder_city for city in data_cities)
+            if not has_matching_city and 'データなし' not in data_cities:
                 issues.append(
                     f"{md_file.relative_to(data_dir)}: "
                     f"Folder is '{folder_city}' but data is for {', '.join(data_cities)}"
