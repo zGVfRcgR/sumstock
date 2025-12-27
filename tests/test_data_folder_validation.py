@@ -11,7 +11,18 @@ from pathlib import Path
 # Add scripts directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'scripts'))
 
-from location_mapping import CITY_MAP
+from location_mapping import CITY_MAP, PREFECTURE_MAP
+
+# Constants
+NO_DATA_INDICATOR = 'データなし'
+
+
+def get_prefecture_code_from_name(pref_name):
+    """Get prefecture code from name by reversing PREFECTURE_MAP"""
+    for code, name in PREFECTURE_MAP.items():
+        if name == pref_name:
+            return code
+    return None
 
 
 def extract_url_from_file(filepath):
@@ -37,7 +48,8 @@ def extract_city_from_data(filepath):
             if '所在地' in match or '町名' in match:
                 continue
             # Extract city name (市/区/町/村 suffix)
-            city_match = re.match(r'(.+?[市区町村])', match.strip())
+            # Only match characters that typically appear in city names (not 県)
+            city_match = re.search(r'([^都道府県]+[市区町村])', match.strip())
             if city_match:
                 cities.add(city_match.group(1))
     return cities
@@ -78,14 +90,8 @@ def validate_data_folder_structure():
             continue
         
         # Get expected city name from URL code
-        # Extract prefecture code from folder structure
-        pref_code_map = {
-            '千葉県': '12',
-            '東京都': '13',
-            '埼玉県': '11',
-            '神奈川県': '14',
-        }
-        pref_code = pref_code_map.get(folder_pref, None)
+        # Extract prefecture code from folder structure using the mapping
+        pref_code = get_prefecture_code_from_name(folder_pref)
         if not pref_code:
             # Skip validation for prefectures not in our mapping
             continue
@@ -106,7 +112,7 @@ def validate_data_folder_structure():
         if data_cities:
             # Check if any data city matches the folder city exactly
             has_matching_city = any(city == folder_city for city in data_cities)
-            if not has_matching_city and 'データなし' not in data_cities:
+            if not has_matching_city and NO_DATA_INDICATOR not in data_cities:
                 issues.append(
                     f"{md_file.relative_to(data_dir)}: "
                     f"Folder is '{folder_city}' but data is for {', '.join(data_cities)}"
