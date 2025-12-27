@@ -153,25 +153,7 @@ def get_location_from_url(url: str) -> tuple[str, str]:
         Tuple of (prefecture_name, city_name) based on URL codes
         Returns ('その他', 'その他') if URL cannot be parsed
     """
-    if not url:
-        return 'その他', 'その他'
-    
-    try:
-        # Extract codes from URL pattern: /search/region/prefecture/city
-        pattern = r'/search/(\d+)/(\d+)/(\d+)'
-        match = re.search(pattern, url)
-        if match:
-            pref_code = match.group(2)  # Middle number is prefecture
-            city_code = match.group(3)  # Last number is city
-            pref_name = PREFECTURE_MAP.get(pref_code.zfill(2), 'その他')
-            # Get city name from CITY_MAP
-            pref_cities = CITY_MAP.get(pref_code.zfill(2), {})
-            city_name = pref_cities.get(city_code, 'その他')
-            return pref_name, city_name
-    except Exception as e:
-        print(f"Warning: Failed to parse location from URL {url}: {e}", file=sys.stderr)
-    
-    return 'その他', 'その他'
+    return _extract_location_from_url_code(url)
 
 
 def get_location_from_api(address: str, api_client, url: str = '') -> tuple[str, str]:
@@ -217,72 +199,83 @@ def get_location_from_api(address: str, api_client, url: str = '') -> tuple[str,
     return parse_location_from_address(address, url)
 
 
-def parse_location_from_address(address: str, url: str = '') -> tuple[str, str]:
-    """Parse prefecture and city from Japanese address string and URL"""
-    if not address:
+def _extract_location_from_url_code(url: str) -> tuple[str, str]:
+    """Helper function to extract prefecture and city codes from URL
+    
+    Args:
+        url: SumStock URL (e.g., 'https://sumstock.jp/search/02/12/12217')
+    
+    Returns:
+        Tuple of (prefecture_name, city_name) based on URL codes
+        Returns ('その他', 'その他') if URL cannot be parsed
+    """
+    if not url:
         return 'その他', 'その他'
     
+    try:
+        # Extract codes from URL pattern: /search/region/prefecture/city
+        pattern = r'/search/(\d+)/(\d+)/(\d+)'
+        match = re.search(pattern, url)
+        if match:
+            pref_code = match.group(2)  # Middle number is prefecture
+            city_code = match.group(3)  # Last number is city
+            pref_name = PREFECTURE_MAP.get(pref_code.zfill(2), 'その他')
+            # Get city name from CITY_MAP
+            pref_cities = CITY_MAP.get(pref_code.zfill(2), {})
+            city_name = pref_cities.get(city_code, 'その他')
+            return pref_name, city_name
+    except Exception:
+        pass
+    
+    return 'その他', 'その他'
+
+
 def parse_location_from_address(address: str, url: str = '') -> tuple[str, str]:
     """Parse prefecture and city from Japanese address string and URL"""
     if not address:
         return 'その他', 'その他'
     
     # Get prefecture and city from URL if available
-    pref_name = 'その他'
-    city_name = 'その他'
     if url:
-        try:
-            # Extract codes from URL pattern: /search/region/prefecture/city
-            pattern = r'/search/(\d+)/(\d+)/(\d+)'
-            match = re.search(pattern, url)
-            if match:
-                pref_code = match.group(2)  # Middle number is prefecture
-                city_code = match.group(3)  # Last number is city
-                pref_name = PREFECTURE_MAP.get(pref_code.zfill(2), 'その他')
-                # Get city name from CITY_MAP
-                pref_cities = CITY_MAP.get(pref_code.zfill(2), {})
-                city_name = pref_cities.get(city_code, 'その他')
-        except Exception as e:
-            pass
-    
-    # If we got location from URL, return it
-    if pref_name != 'その他' or city_name != 'その他':
-        return pref_name, city_name
+        pref_name, city_name = _extract_location_from_url_code(url)
+        if pref_name != 'その他' or city_name != 'その他':
+            return pref_name, city_name
     
     # Fallback: parse from address string
+    pref_name = 'その他'
+    city_name = 'その他'
+    
     # If prefecture not found in URL, try to find in address
-    if pref_name == 'その他':
-        prefectures = [
-            '北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県',
-            '茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県',
-            '新潟県', '富山県', '石川県', '福井県', '山梨県', '長野県', '岐阜県',
-            '静岡県', '愛知県', '三重県', '滋賀県', '京都府', '大阪府', '兵庫県',
-            '奈良県', '和歌山県', '鳥取県', '島根県', '岡山県', '広島県', '山口県',
-            '徳島県', '香川県', '愛媛県', '高知県', '福岡県', '佐賀県', '長崎県',
-            '熊本県', '大分県', '宮崎県', '鹿児島県', '沖縄県'
-        ]
-        
-        for pref in prefectures:
-            if pref in address:
-                pref_name = pref
-                break
+    prefectures = [
+        '北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県',
+        '茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県',
+        '新潟県', '富山県', '石川県', '福井県', '山梨県', '長野県', '岐阜県',
+        '静岡県', '愛知県', '三重県', '滋賀県', '京都府', '大阪府', '兵庫県',
+        '奈良県', '和歌山県', '鳥取県', '島根県', '岡山県', '広島県', '山口県',
+        '徳島県', '香川県', '愛媛県', '高知県', '福岡県', '佐賀県', '長崎県',
+        '熊本県', '大分県', '宮崎県', '鹿児島県', '沖縄県'
+    ]
+    
+    for pref in prefectures:
+        if pref in address:
+            pref_name = pref
+            break
     
     # Extract city name from address
-    if city_name == 'その他':
-        remaining = address
-        
-        # Remove prefecture if present
-        if pref_name != 'その他' and pref_name in remaining:
-            remaining = remaining.replace(pref_name, '', 1).strip()
-        
-        # Look for city name (市/区/町/村 until next 市/区/町/村 or space)
-        # Pattern: match from start until we hit another 市/区/町/村 or number/space
-        match = re.match(r'^(.+[市区町村])', remaining)
-        if match:
-            candidate = match.group(1).strip()
-            # Validate it's a reasonable city name
-            if len(candidate) >= 2 and len(candidate) <= 15 and any(suffix in candidate for suffix in ['区', '市', '町', '村']):
-                city_name = candidate
+    remaining = address
+    
+    # Remove prefecture if present
+    if pref_name != 'その他' and pref_name in remaining:
+        remaining = remaining.replace(pref_name, '', 1).strip()
+    
+    # Look for city name (市/区/町/村 until next 市/区/町/村 or space)
+    # Pattern: match from start until we hit another 市/区/町/村 or number/space
+    match = re.match(r'^(.+[市区町村])', remaining)
+    if match:
+        candidate = match.group(1).strip()
+        # Validate it's a reasonable city name
+        if len(candidate) >= 2 and len(candidate) <= 15 and any(suffix in candidate for suffix in ['区', '市', '町', '村']):
+            city_name = candidate
     
     return pref_name, city_name
 
