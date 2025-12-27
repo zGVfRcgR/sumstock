@@ -12,6 +12,16 @@ https://sumstock.jp/search/{region}/{prefecture}/{city}
 For example:
 - `https://sumstock.jp/search/02/12/12215` - 千葉県 柏市 (Kashiwa City, Chiba Prefecture)
 
+## Important: URL Code Determines Folder Location
+
+**The scraper now uses the URL code to determine where files are saved**, regardless of what addresses appear in the scraped data. This ensures consistency and prevents mismatches.
+
+Example:
+- URL with code `12217` → Always saves to `data/千葉県/市原市/`
+- URL with code `12215` → Always saves to `data/千葉県/柏市/`
+
+Even if the scraped data contains addresses from a different city, the file will be saved according to the URL code.
+
 ## Chiba Prefecture (千葉県) City Codes
 
 Based on `scripts/location_mapping.py`, the correct city codes are:
@@ -28,20 +38,20 @@ Based on `scripts/location_mapping.py`, the correct city codes are:
 
 ### Issue: Data from one city appears in another city's folder
 
-**Symptom**: Files in `data/千葉県/柏市` (Kashiwa City) contain data for a different city.
+**Previous Behavior**: The scraper saved files based on the addresses found in the scraped data, which could cause mismatches when the URL code didn't match the actual data.
 
-**Root Cause**: The scraper saves files based on the addresses found in the scraped data, not the URL code. If the wrong URL is used, data will be saved in the wrong folder.
+**Current Behavior**: The scraper now **always saves files based on the URL code**, ensuring that:
+- Files are consistently organized by URL code
+- No mismatch between URL and folder location
+- Easy to predict where files will be saved
 
-**Solution**: 
-1. Verify the URL uses the correct city code from the table above
-2. Move misplaced files to the correct city folder
-3. Update the URL reference in the file to match the actual data
+**Warning System**: If the URL code doesn't match the scraped addresses, the scraper will log a warning but still save to the folder determined by the URL code.
 
 ### Verification
 
-To verify URLs match the data, check that:
-- The city code in the URL matches the city mentioned in the data
-- For example, if data contains "柏市" (Kashiwa City) addresses, the URL should use code `12215`
+To verify URLs are correct:
+- Check that the city code in the URL is what you intend to scrape
+- For example, to scrape 柏市 (Kashiwa City), use code `12215` not `12217`
 
 ## Reference
 

@@ -140,6 +140,40 @@ def geocode_address(address: str) -> Optional[tuple[float, float]]:
         return None
 
 
+def get_location_from_url(url: str) -> tuple[str, str]:
+    """Get prefecture and city name directly from URL code
+    
+    This ensures that files are always saved to folders matching the URL code,
+    preventing mismatches between URL and folder location.
+    
+    Args:
+        url: SumStock URL (e.g., 'https://sumstock.jp/search/02/12/12217')
+    
+    Returns:
+        Tuple of (prefecture_name, city_name) based on URL codes
+        Returns ('その他', 'その他') if URL cannot be parsed
+    """
+    if not url:
+        return 'その他', 'その他'
+    
+    try:
+        # Extract codes from URL pattern: /search/region/prefecture/city
+        pattern = r'/search/(\d+)/(\d+)/(\d+)'
+        match = re.search(pattern, url)
+        if match:
+            pref_code = match.group(2)  # Middle number is prefecture
+            city_code = match.group(3)  # Last number is city
+            pref_name = PREFECTURE_MAP.get(pref_code.zfill(2), 'その他')
+            # Get city name from CITY_MAP
+            pref_cities = CITY_MAP.get(pref_code.zfill(2), {})
+            city_name = pref_cities.get(city_code, 'その他')
+            return pref_name, city_name
+    except Exception as e:
+        print(f"Warning: Failed to parse location from URL {url}: {e}", file=sys.stderr)
+    
+    return 'その他', 'その他'
+
+
 def get_location_from_api(address: str, api_client, url: str = '') -> tuple[str, str]:
     """Get prefecture and city name from address using Real Estate API or fallback parsing"""
     if not address or address == '不明':
@@ -733,12 +767,19 @@ def main():
         if not properties:
             print(f"Warning: No property data found for URL {i}. Creating file with empty data.", file=sys.stderr)
         
-        # Get location from first property using API or address parsing
+        # Get location directly from URL code to ensure consistency
+        # This prevents mismatches where URL code doesn't match scraped addresses
+        pref_name, city_name = get_location_from_url(url)
+        
+        # Log a warning if URL code doesn't match scraped data
         if properties:
             first_location = properties[0].get('location', '')
-            pref_name, city_name = get_location_from_api(first_location, api_client, url)
-        else:
-            pref_name, city_name = 'その他', 'その他'
+            if first_location and first_location != '不明':
+                # Parse city from first property address
+                data_pref, data_city = parse_location_from_address(first_location, '')
+                if data_city != city_name and data_city != 'その他' and city_name != 'その他':
+                    print(f"Warning: URL code indicates '{city_name}' but scraped data contains '{data_city}' addresses. "
+                          f"Saving to '{city_name}' folder based on URL.", file=sys.stderr)
         
         # Format as Markdown
         markdown = format_markdown(properties, url, current_date, pref_name, city_name)
