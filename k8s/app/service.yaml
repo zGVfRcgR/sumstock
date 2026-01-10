@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: sumstock-demo
+spec:
+  selector:
+    app: sumstock-demo
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
