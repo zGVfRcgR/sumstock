@@ -645,24 +645,94 @@ def scrape_property_data(url: str) -> List[Dict]:
             api_client.close()
 
 
-def format_markdown(properties: List[Dict], url: str, date: datetime, pref_name: str = 'その他', city_name: str = 'その他') -> str:
-    """Format property data as Markdown
+def ensure_prefecture_index(output_dir: str, pref_name: str):
+    """Ensure prefecture index.md exists
+    
+    Args:
+        output_dir: Base output directory (e.g., 'data')
+        pref_name: Prefecture name
+    """
+    pref_dir = os.path.join(output_dir, pref_name)
+    index_path = os.path.join(pref_dir, 'index.md')
+    
+    # Only create if it doesn't exist
+    if os.path.exists(index_path):
+        return
+    
+    os.makedirs(pref_dir, exist_ok=True)
+    
+    content = f"""---
+layout: default
+title: {pref_name}
+parent: データ一覧
+has_children: true
+nav_order: 10
+---
 
-    nav_order will be set to "{pref_name} {city_name}" so pages are ordered/grouped
-    by prefecture and city in the site navigation.
+# {pref_name}
+
+このページには{pref_name}の市町村別データが表示されています。
+
+各市町村を選択してデータをご覧ください。
+"""
+    
+    with open(index_path, 'w', encoding='utf-8') as f:
+        f.write(content)
+    
+    print(f"Created prefecture index: {index_path}")
+
+
+def ensure_city_index(output_dir: str, pref_name: str, city_name: str):
+    """Ensure city index.md exists
+    
+    Args:
+        output_dir: Base output directory (e.g., 'data')
+        pref_name: Prefecture name
+        city_name: City name
+    """
+    city_dir = os.path.join(output_dir, pref_name, city_name)
+    index_path = os.path.join(city_dir, 'index.md')
+    
+    # Only create if it doesn't exist
+    if os.path.exists(index_path):
+        return
+    
+    os.makedirs(city_dir, exist_ok=True)
+    
+    content = f"""---
+layout: default
+title: {city_name}
+parent: {pref_name}
+has_children: true
+nav_order: 10
+---
+
+# {city_name}
+
+このページには{pref_name}{city_name}の日付別データが表示されています。
+
+各日付を選択してデータをご覧ください。
+"""
+    
+    with open(index_path, 'w', encoding='utf-8') as f:
+        f.write(content)
+    
+    print(f"Created city index: {index_path}")
+
+
+def format_markdown(properties: List[Dict], url: str, date: datetime, pref_name: str = 'その他', city_name: str = 'その他') -> str:
+    """Format property data as Markdown with proper parent hierarchy
+    
+    The front matter uses parent: city_name to establish the hierarchy:
+    データ一覧 > Prefecture > City > Date
     """
     date_str = date.strftime('%Y年%m月%d日')
     
-    # Use categories (prefecture, city) and order (date) for Jekyll front-matter
-    date_filename = date.strftime('%Y%m%d')
-    order_value = int(date_filename)
-    # categories is a YAML list; order is numeric to help sorting in some themes
+    # Use parent-child hierarchy for proper navigation
     markdown = f"""---
 layout: default
 title: {date.strftime('%Y-%m-%d')}
-parent: データ一覧
-categories: [{pref_name}, {city_name}]
-order: {order_value}
+parent: {city_name}
 ---
 
 # スムストック物件データ
@@ -703,13 +773,17 @@ def save_markdown_file(markdown: str, date: datetime, pref_name: str, city_name:
         output_dir: Output directory path
         suffix: Optional suffix for filename (e.g., '_1', '_2')
     """
+    # Ensure prefecture and city index pages exist
+    ensure_prefecture_index(output_dir, pref_name)
+    ensure_city_index(output_dir, pref_name, city_name)
+    
     # Create folder structure: data/prefecture/city/
     # Always create folders even for unknown locations (その他)
-    output_dir = os.path.join(output_dir, pref_name, city_name)
+    city_dir = os.path.join(output_dir, pref_name, city_name)
     
-    os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(city_dir, exist_ok=True)
     filename = date.strftime('%Y-%m-%d') + suffix + '.md'
-    filepath = os.path.join(output_dir, filename)
+    filepath = os.path.join(city_dir, filename)
     
     with open(filepath, 'w', encoding='utf-8') as f:
         f.write(markdown)
