@@ -41,6 +41,41 @@ def extract_urls_from_issue(issue_body: str) -> List[str]:
     return matches
 
 
+def read_urls_from_config(config_path: str = None) -> List[str]:
+    """Read SumStock URLs from a config file.
+
+    The config file contains one URL per line; lines starting with '#' are
+    treated as comments and ignored.  This is the authoritative source for
+    which cities are scraped each month, so that the list is version-controlled
+    and not dependent on the body of a GitHub issue.
+
+    Args:
+        config_path: Path to the config file.  Defaults to
+            ``<repo_root>/config/scrape_urls.txt``.
+
+    Returns:
+        List of SumStock URLs found in the config file.
+    """
+    if config_path is None:
+        repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        config_path = os.path.join(repo_root, 'config', 'scrape_urls.txt')
+
+    if not os.path.exists(config_path):
+        return []
+
+    urls = []
+    url_pattern = re.compile(r'https://sumstock\.jp/search/\d+/\d+/\d+')
+    with open(config_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+            match = url_pattern.search(line)
+            if match:
+                urls.append(match.group())
+    return urls
+
+
 def parse_price(price_str: str) -> Optional[float]:
     """Parse price string and return value in man-yen (万円)"""
     if not price_str or price_str == '-':
@@ -806,17 +841,31 @@ def main():
     
     # Determine URLs to process
     if len(sys.argv) > 1:
-        # Use command-line arguments
+        # Command-line arguments have the highest priority (e.g. manual one-off runs)
         urls = sys.argv[1:]
+        print(f"Using {len(urls)} URL(s) from command-line arguments")
     else:
-        # Extract from issue body
-        urls = extract_urls_from_issue(issue_body)
+        # Always prefer the config file so the URL list is version-controlled and
+        # not dependent on the body of a GitHub tracking issue (which can contain
+        # wrong or outdated URLs — the original root cause of Kashiwa data being
+        # saved to the Ichihara folder).
+        urls = read_urls_from_config()
+        if urls:
+            print(f"Using {len(urls)} URL(s) from config file")
+        else:
+            # Fallback: extract URLs from the issue body (legacy behaviour, kept
+            # for backwards-compatibility with manual workflow dispatches that
+            # supply URLs only through ISSUE_BODY).
+            urls = extract_urls_from_issue(issue_body)
+            if urls:
+                print(f"Using {len(urls)} URL(s) from ISSUE_BODY (config file not found)")
     
     if not urls:
-        print("Error: No SumStock URL found. Please provide URL as argument or in ISSUE_BODY environment variable.", file=sys.stderr)
+        print("Error: No SumStock URL found. Please provide URL as argument, "
+              "add a config/scrape_urls.txt file at the repository root, "
+              "or set ISSUE_BODY environment variable.",
+              file=sys.stderr)
         sys.exit(1)
-    
-    print(f"Found {len(urls)} URL(s) to process")
     
     # Get current date
     current_date = datetime.now()
