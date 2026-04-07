@@ -1,11 +1,11 @@
 # SumStock URLs to scrape monthly
 # Format: one URL per line, lines starting with # are comments
-# URL code mapping (JIS city codes):
+# URL code mapping (SumStock city codes):
 #   12203 = 市川市 (Ichikawa)
 #   12207 = 松戸市 (Matsudo)
-#   12215 = 柏市 (Kashiwa)   ← correct code for Kashiwa (NOT 12217)
+#   12217 = 柏市 (Kashiwa)   ← SumStock code for Kashiwa (市区町村コード: 122173)
 #   12220 = 流山市 (Nagareyama)
 https://sumstock.jp/search/02/12/12203
 https://sumstock.jp/search/02/12/12207
-https://sumstock.jp/search/02/12/12215
+https://sumstock.jp/search/02/12/12217
 https://sumstock.jp/search/02/12/12220
