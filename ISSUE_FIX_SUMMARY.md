@@ -20,14 +20,14 @@ Files in `data/千葉県/柏市` (Kashiwa City, Chiba Prefecture) folder contain
 
 **Correct City Codes**
 
-According to `scripts/location_mapping.py`:
+According to SumStock URL scheme (市区町村コード 122173 = 柏市):
 
 | City Code | City Name (Japanese) | City Name (English) |
 |-----------|---------------------|---------------------|
 | 12203 | 市川市 | Ichikawa City |
 | 12207 | 松戸市 | Matsudo City |
-| 12215 | 柏市 | Kashiwa City |
-| 12217 | 市原市 | Ichihara City |
+| 12215 | 旭市 | Asahi City |
+| 12217 | 柏市 | Kashiwa City |
 | 12220 | 流山市 | Nagareyama City |
 
 **Files Fixed**
