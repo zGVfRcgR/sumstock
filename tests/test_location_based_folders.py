@@ -29,8 +29,8 @@ def test_parse_url_location():
     assert pref_name == "千葉県", f"Expected 千葉県, got {pref_name}"
     assert city_name == "松戸市", f"Expected 松戸市, got {city_name}"
     
-    # Test 2: Chiba - Kashiwa (千葉県柏市)
-    url2 = "https://sumstock.jp/search/02/12/12215"
+    # Test 2: Chiba - Kashiwa (千葉県柏市) - SumStock uses 12217 for Kashiwa
+    url2 = "https://sumstock.jp/search/02/12/12217"
     pref_code, pref_name, city_code, city_name = parse_url_location(url2)
     print(f"  URL: {url2}")
     print(f"    Prefecture: {pref_code} -> {pref_name}")
@@ -70,8 +70,8 @@ def test_folder_structure_creation():
         assert os.path.exists(filepath1), f"File not created: {filepath1}"
         print(f"  ✓ Created: {filepath1}")
         
-        # Test 2: Save file for Kashiwa, Chiba
-        url2 = "https://sumstock.jp/search/02/12/12215"
+        # Test 2: Save file for Kashiwa, Chiba - SumStock uses 12217 for Kashiwa
+        url2 = "https://sumstock.jp/search/02/12/12217"
         filepath2 = save_markdown_file(markdown_content, current_date, output_dir=temp_dir, url=url2)
         
         expected_path2 = os.path.join(temp_dir, "千葉県", "柏市", current_date.strftime('%Y-%m-%d') + '.md')
