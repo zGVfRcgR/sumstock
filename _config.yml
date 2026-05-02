@@ -21,6 +21,19 @@ exclude:
   - package-lock.json
   - Rakefile
   - just-the-docs.gemspec
+  - scripts/
+  - tests/
+  - requirements.txt
+  - .github/
+  - .gitignore
+  - .vscode/
+
+# Include tracking data
+include:
+  - tracking_db.json
+  - data/tracking_report.md
+  - data/mlit_matching_report.md
+  - docs/images/
 
 # Just the Docs specific settings
 # Enable or disable the site search
