@@ -50,6 +50,8 @@ nav_order: 2
 
 [MLIT照合レポートを見る](data/mlit_matching_report.md)
 
+> ⚠️ REINFOLIB_API_KEY が設定されていない場合、このレポートは生成されないためリンクが機能しないことがあります。
+
 ---
 
 ## 💡 このデータの見方
