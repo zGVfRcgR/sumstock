@@ -46,13 +46,9 @@ nav_order: 2
 
 ## 🏢 国土交通省データとの照合
 
-{% if file.exists?('data/mlit_matching_report.md') %}
 国土交通省の不動産取引価格情報との照合結果です（参考情報）。
 
 [MLIT照合レポートを見る](data/mlit_matching_report.md)
-{% else %}
-MLIT APIキーが設定されていないため、照合は行われていません。
-{% endif %}
 
 ---
 
