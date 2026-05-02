@@ -7,6 +7,7 @@ Property Tracking Visualization
 import json
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import japanize_matplotlib  # noqa: F401 – 日本語フォントを有効化
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
@@ -24,8 +25,7 @@ class PropertyVisualizer:
         with open(tracking_db_path, 'r', encoding='utf-8') as f:
             self.tracking_db = json.load(f)
         
-        # 日本語フォント設定（環境に応じて調整）
-        plt.rcParams['font.sans-serif'] = ['DejaVu Sans', 'Arial']
+        # japanize_matplotlib のインポートにより日本語フォントが自動設定される
         plt.rcParams['axes.unicode_minus'] = False
     
     def plot_listing_duration_distribution(self, output_path: str = "docs/images/listing_duration.png"):
@@ -51,11 +51,11 @@ class PropertyVisualizer:
         # 平均値の線
         mean_duration = np.mean(durations)
         ax.axvline(mean_duration, color='red', linestyle='--', linewidth=2,
-                   label=f'Average: {mean_duration:.1f} days')
+                   label=f'平均: {mean_duration:.1f}日')
         
-        ax.set_xlabel('Listing Duration (days)', fontsize=12)
-        ax.set_ylabel('Number of Properties', fontsize=12)
-        ax.set_title('Distribution of Property Listing Duration', fontsize=14, fontweight='bold')
+        ax.set_xlabel('掲載期間（日）', fontsize=12)
+        ax.set_ylabel('物件数', fontsize=12)
+        ax.set_title('物件掲載期間の分布', fontsize=14, fontweight='bold')
         ax.legend()
         ax.grid(axis='y', alpha=0.3)
         
@@ -87,14 +87,15 @@ class PropertyVisualizer:
                        markersize=6, alpha=0.7, color=color)
                 
                 # ラベル（最初の3件のみ）
+                status_label = '販売終了（推定）' if prop['status'] == 'sold_presumed' else '販売中'
                 if property_index < 3:
-                    legend_labels.append(f"{prop['location'][:15]}... ({prop['status']})")
+                    legend_labels.append(f"{prop['location'][:15]}... ({status_label})")
                 
                 property_index += 1
         
-        ax.set_xlabel('Date', fontsize=12)
-        ax.set_ylabel('Price (10,000 yen)', fontsize=12)
-        ax.set_title('Property Price Changes Over Time', fontsize=14, fontweight='bold')
+        ax.set_xlabel('日付', fontsize=12)
+        ax.set_ylabel('価格（万円）', fontsize=12)
+        ax.set_title('物件価格の推移', fontsize=14, fontweight='bold')
         
         # 日付フォーマット
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
@@ -112,13 +113,13 @@ class PropertyVisualizer:
     
     def plot_status_pie_chart(self, output_path: str = "docs/images/status_distribution.png"):
         """物件ステータスの円グラフ"""
-        status_counts = {'Active': 0, 'Sold (Presumed)': 0}
+        status_counts = {'販売中': 0, '販売終了（推定）': 0}
         
         for prop in self.tracking_db['properties'].values():
             if prop['status'] == 'active':
-                status_counts['Active'] += 1
+                status_counts['販売中'] += 1
             elif prop['status'] == 'sold_presumed':
-                status_counts['Sold (Presumed)'] += 1
+                status_counts['販売終了（推定）'] += 1
         
         fig, ax = plt.subplots(figsize=(8, 8))
         
@@ -135,11 +136,11 @@ class PropertyVisualizer:
             textprops={'fontsize': 12}
         )
         
-        # 値を追加
+        # 件数を追加
         for i, (label, value) in enumerate(status_counts.items()):
-            texts[i].set_text(f"{label}\n({value} properties)")
+            texts[i].set_text(f"{label}\n({value}件)")
         
-        ax.set_title('Property Status Distribution', fontsize=14, fontweight='bold')
+        ax.set_title('物件ステータスの分布', fontsize=14, fontweight='bold')
         
         plt.tight_layout()
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
@@ -186,8 +187,8 @@ class PropertyVisualizer:
         
         ax.set_yticks(y_pos)
         ax.set_yticklabels(labels, fontsize=9)
-        ax.set_xlabel('Price Change (%)', fontsize=12)
-        ax.set_title('Price Changes by Property', fontsize=14, fontweight='bold')
+        ax.set_xlabel('価格変動率（%）', fontsize=12)
+        ax.set_title('物件別価格変動', fontsize=14, fontweight='bold')
         ax.axvline(0, color='black', linewidth=0.8)
         ax.grid(axis='x', alpha=0.3)
         
