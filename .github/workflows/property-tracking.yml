@@ -1,0 +1,122 @@
+name: Property Tracking & Analytics
+
+on:
+  schedule:
+    # Run on the 2nd day of every month at 02:00 UTC (after scraping completes)
+    - cron: '0 2 2 * *'
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - 'data/**/*.md'
+      - 'scripts/track_properties.py'
+      - 'scripts/visualize_tracking.py'
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "tracking"
+  cancel-in-progress: false
+
+jobs:
+  track-and-analyze:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for complete tracking
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install matplotlib numpy
+      
+      - name: Run property tracking
+        run: |
+          echo "🔍 Running property tracking analysis..."
+          python3 scripts/track_properties.py
+      
+      - name: Generate visualizations
+        run: |
+          echo "📊 Generating visualizations..."
+          python3 scripts/visualize_tracking.py
+      
+      - name: Run MLIT API matching (if API key available)
+        env:
+          REINFOLIB_API_KEY: ${{ secrets.REINFOLIB_API_KEY }}
+        run: |
+          if [ -n "$REINFOLIB_API_KEY" ]; then
+            echo "🏢 Running MLIT API matching..."
+            python3 scripts/match_with_mlit.py
+          else
+            echo "⚠️  REINFOLIB_API_KEY not set, skipping MLIT matching"
+          fi
+        continue-on-error: true
+      
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Commit tracking data
+        run: |
+          git add tracking_db.json
+          git add data/tracking_report.md
+          git add data/mlit_matching_report.md || true
+          git add docs/images/*.png
+          
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "🤖 Update property tracking data [$(date +'%Y-%m-%d %H:%M')]"
+            git push
+          fi
+      
+      - name: Display tracking summary
+        run: |
+          echo "📈 Tracking Summary:"
+          echo "==================="
+          cat data/tracking_report.md | head -30
+
+  build-and-deploy-pages:
+    needs: track-and-analyze
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main  # Ensure we get the latest changes
+      
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+      
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v5
+      
+      - name: Build with Jekyll
+        run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
+        env:
+          JEKYLL_ENV: production
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+      
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
