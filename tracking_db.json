@@ -42,6 +42,21 @@
           "date": "2026-03-01",
           "total_price": 5980.0,
           "change": -310.0
+        },
+        {
+          "date": "2025-10-19",
+          "total_price": 6490.0,
+          "change": 510.0
+        },
+        {
+          "date": "2025-12-27",
+          "total_price": 6290.0,
+          "change": -200.0
+        },
+        {
+          "date": "2026-03-01",
+          "total_price": 5980.0,
+          "change": -310.0
         }
       ]
     },
@@ -100,6 +115,16 @@
           "date": "2025-10-22",
           "total_price": 12000.0,
           "change": 10000.0
+        },
+        {
+          "date": "2025-10-19",
+          "total_price": 2000.0,
+          "change": -10000.0
+        },
+        {
+          "date": "2025-10-22",
+          "total_price": 12000.0,
+          "change": 10000.0
         }
       ],
       "sold_date": "2026-02-01"
@@ -112,14 +137,15 @@
       "house_maker": "-",
       "first_seen": "2025-10-22",
       "last_seen": "2026-05-01",
-      "status": "active",
+      "status": "sold_presumed",
       "price_history": [
         {
           "date": "2025-10-22",
           "total_price": 2498.0,
           "change": null
         }
-      ]
+      ],
+      "sold_date": "2025-10-19"
     },
     "e64219cae04cbfdc": {
       "property_id": "e64219cae04cbfdc",
@@ -135,6 +161,16 @@
           "date": "2025-11-01",
           "total_price": 8280.0,
           "change": null
+        },
+        {
+          "date": "2025-12-01",
+          "total_price": 7980.0,
+          "change": -300.0
+        },
+        {
+          "date": "2025-11-01",
+          "total_price": 8280.0,
+          "change": 300.0
         },
         {
           "date": "2025-12-01",
@@ -206,14 +242,15 @@
       "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/asahikasei_sm.png\" alt=\"-\" style=\"height:32px;\">",
       "first_seen": "2026-05-01",
       "last_seen": "2026-05-01",
-      "status": "active",
+      "status": "sold_presumed",
       "price_history": [
         {
           "date": "2026-05-01",
           "total_price": 4730.0,
           "change": null
         }
-      ]
+      ],
+      "sold_date": "2025-10-19"
     }
   },
   "statistics": {}
