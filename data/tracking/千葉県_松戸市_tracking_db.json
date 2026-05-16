@@ -1,0 +1,172 @@
+{
+  "properties": {
+    "fc9b014e429f303f": {
+      "property_id": "fc9b014e429f303f",
+      "location": "松戸市中金杉１丁目",
+      "building_area": 151.45,
+      "land_area": 112.85,
+      "house_maker": "大和ハウス",
+      "first_seen": "2025-10-19",
+      "last_seen": "2026-04-07",
+      "status": "sold_presumed",
+      "price_history": [
+        {
+          "date": "2025-10-19",
+          "total_price": 3280.0,
+          "change": null
+        },
+        {
+          "date": "2026-04-01",
+          "total_price": 3180.0,
+          "change": -100.0
+        }
+      ],
+      "sold_date": "2026-05-01"
+    },
+    "ed7c1bf62f9c91b0": {
+      "property_id": "ed7c1bf62f9c91b0",
+      "location": "松戸市新松戸南１丁目",
+      "building_area": 79.64,
+      "land_area": 79.5,
+      "house_maker": "積水ハウス",
+      "first_seen": "2025-10-19",
+      "last_seen": "2026-05-01",
+      "status": "sold_presumed",
+      "price_history": [
+        {
+          "date": "2025-10-19",
+          "total_price": 3480.0,
+          "change": null
+        },
+        {
+          "date": "2025-12-01",
+          "total_price": 3380.0,
+          "change": -100.0
+        },
+        {
+          "date": "2026-04-01",
+          "total_price": 3280.0,
+          "change": -100.0
+        }
+      ],
+      "sold_date": "2026-02-01"
+    },
+    "abec977108b55ec6": {
+      "property_id": "abec977108b55ec6",
+      "location": "松戸市牧の原１丁目 １０２－１２",
+      "building_area": 129.59,
+      "land_area": 119.0,
+      "house_maker": "セキスイハイム",
+      "first_seen": "2025-10-19",
+      "last_seen": "2026-05-01",
+      "status": "active",
+      "price_history": [
+        {
+          "date": "2025-10-19",
+          "total_price": 5480.0,
+          "change": null
+        },
+        {
+          "date": "2025-12-27",
+          "total_price": 5280.0,
+          "change": -200.0
+        }
+      ]
+    },
+    "7c722ee7d9c37641": {
+      "property_id": "7c722ee7d9c37641",
+      "location": "松戸市五香２丁目",
+      "building_area": 148.04,
+      "land_area": 127.42,
+      "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/sekisuihouse_sm.png\" alt=\"積水ハウス\" style=\"height:32px;\">",
+      "first_seen": "2025-12-27",
+      "last_seen": "2026-05-01",
+      "status": "sold_presumed",
+      "price_history": [
+        {
+          "date": "2025-12-27",
+          "total_price": 6380.0,
+          "change": null
+        }
+      ],
+      "sold_date": "2026-02-01"
+    },
+    "fbf0964b56913d11": {
+      "property_id": "fbf0964b56913d11",
+      "location": "松戸市新松戸南１丁目１９６番",
+      "building_area": 79.64,
+      "land_area": 79.5,
+      "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/sekisuihouse_sm.png\" alt=\"積水ハウス\" style=\"height:32px;\">",
+      "first_seen": "2026-02-01",
+      "last_seen": "2026-03-01",
+      "status": "sold_presumed",
+      "price_history": [
+        {
+          "date": "2026-02-01",
+          "total_price": 3380.0,
+          "change": null
+        }
+      ],
+      "sold_date": "2026-04-01"
+    },
+    "1c5b6ff58200b85b": {
+      "property_id": "1c5b6ff58200b85b",
+      "location": "松戸市三ケ月",
+      "building_area": 268.24,
+      "land_area": 133.36,
+      "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/sumitomo_sm.png\" alt=\"-\" style=\"height:32px;\">",
+      "first_seen": "2026-02-01",
+      "last_seen": "2026-04-07",
+      "status": "sold_presumed",
+      "price_history": [
+        {
+          "date": "2026-02-01",
+          "total_price": 6280.0,
+          "change": null
+        },
+        {
+          "date": "2026-03-01",
+          "total_price": 5980.0,
+          "change": -300.0
+        }
+      ],
+      "sold_date": "2026-05-01"
+    },
+    "7baea402a42c970e": {
+      "property_id": "7baea402a42c970e",
+      "location": "松戸市五香２丁目１７番５５",
+      "building_area": 148.04,
+      "land_area": 127.42,
+      "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/sekisuihouse_sm.png\" alt=\"積水ハウス\" style=\"height:32px;\">",
+      "first_seen": "2026-02-01",
+      "last_seen": "2026-03-01",
+      "status": "sold_presumed",
+      "price_history": [
+        {
+          "date": "2026-02-01",
+          "total_price": 6380.0,
+          "change": null
+        }
+      ],
+      "sold_date": "2026-04-01"
+    },
+    "5fbf6ad25a6d08b0": {
+      "property_id": "5fbf6ad25a6d08b0",
+      "location": "松戸市二十世紀が丘中松町",
+      "building_area": 138.11,
+      "land_area": 111.52,
+      "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/sekisuiheim_sm.png\" alt=\"セキスイハイム\" style=\"height:32px;\">",
+      "first_seen": "2026-04-07",
+      "last_seen": "2026-05-01",
+      "status": "active",
+      "price_history": [
+        {
+          "date": "2026-04-07",
+          "total_price": 6980.0,
+          "change": null
+        }
+      ]
+    }
+  },
+  "statistics": {}
+}

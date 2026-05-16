@@ -1,0 +1,245 @@
+{
+  "properties": {
+    "9b606fa49e18656d": {
+      "property_id": "9b606fa49e18656d",
+      "location": "柏市新富町２丁目",
+      "building_area": 110.53,
+      "land_area": 110.03,
+      "house_maker": "大和ハウス",
+      "first_seen": "2025-10-19",
+      "last_seen": "2026-02-01",
+      "status": "sold_presumed",
+      "price_history": [
+        {
+          "date": "2025-10-19",
+          "total_price": 2590.0,
+          "change": null
+        },
+        {
+          "date": "2025-12-27",
+          "total_price": 2490.0,
+          "change": -100.0
+        }
+      ],
+      "sold_date": "2026-03-01"
+    },
+    "d5ecdd0bb9e38af6": {
+      "property_id": "d5ecdd0bb9e38af6",
+      "location": "柏市加賀１丁目",
+      "building_area": 167.71,
+      "land_area": 182.29,
+      "house_maker": "-",
+      "first_seen": "2025-10-19",
+      "last_seen": "2026-03-01",
+      "status": "sold_presumed",
+      "price_history": [
+        {
+          "date": "2025-10-19",
+          "total_price": 3480.0,
+          "change": null
+        }
+      ],
+      "sold_date": "2026-05-01"
+    },
+    "f8ced177e17d745f": {
+      "property_id": "f8ced177e17d745f",
+      "location": "柏市柏1330番1",
+      "building_area": 125.8,
+      "land_area": 111.11,
+      "house_maker": "-",
+      "first_seen": "2025-10-19",
+      "last_seen": "2025-11-01",
+      "status": "sold_presumed",
+      "price_history": [
+        {
+          "date": "2025-10-19",
+          "total_price": 3880.0,
+          "change": null
+        }
+      ],
+      "sold_date": "2025-12-27"
+    },
+    "513bdc8f25362a9a": {
+      "property_id": "513bdc8f25362a9a",
+      "location": "柏市つくしが丘３丁目 ２－９",
+      "building_area": 165.72,
+      "land_area": 79.19,
+      "house_maker": "セキスイハイム",
+      "first_seen": "2025-10-19",
+      "last_seen": "2025-11-01",
+      "status": "sold_presumed",
+      "price_history": [
+        {
+          "date": "2025-10-19",
+          "total_price": 4480.0,
+          "change": null
+        }
+      ],
+      "sold_date": "2025-12-27"
+    },
+    "3b627dc1c8e12620": {
+      "property_id": "3b627dc1c8e12620",
+      "location": "柏市名戸ケ谷１丁目",
+      "building_area": 105.22,
+      "land_area": 104.34,
+      "house_maker": "-",
+      "first_seen": "2025-10-22",
+      "last_seen": "2026-01-01",
+      "status": "sold_presumed",
+      "price_history": [
+        {
+          "date": "2025-10-22",
+          "total_price": 2480.0,
+          "change": null
+        }
+      ],
+      "sold_date": "2026-02-01"
+    },
+    "b546b36547a049bc": {
+      "property_id": "b546b36547a049bc",
+      "location": "柏市酒井根６丁目",
+      "building_area": 92.51,
+      "land_area": 126.4,
+      "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/daiwahouse_sm.png\" alt=\"大和ハウス\" style=\"height:32px;\">",
+      "first_seen": "2025-12-27",
+      "last_seen": "2026-05-01",
+      "status": "active",
+      "price_history": [
+        {
+          "date": "2025-12-27",
+          "total_price": 1980.0,
+          "change": null
+        }
+      ]
+    },
+    "8b66d84f65940abd": {
+      "property_id": "8b66d84f65940abd",
+      "location": "柏市増尾台３丁目",
+      "building_area": 145.07,
+      "land_area": 112.19,
+      "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/mitsuihome_sm.png\" alt=\"-\" style=\"height:32px;\">",
+      "first_seen": "2025-12-27",
+      "last_seen": "2026-01-01",
+      "status": "sold_presumed",
+      "price_history": [
+        {
+          "date": "2025-12-27",
+          "total_price": 2480.0,
+          "change": null
+        }
+      ],
+      "sold_date": "2026-02-01"
+    },
+    "56b3bc75241db208": {
+      "property_id": "56b3bc75241db208",
+      "location": "柏市つくしが丘３丁目 ２－９",
+      "building_area": 168.45,
+      "land_area": 79.19,
+      "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/sekisuiheim_sm.png\" alt=\"セキスイハイム\" style=\"height:32px;\">",
+      "first_seen": "2025-12-27",
+      "last_seen": "2026-02-01",
+      "status": "sold_presumed",
+      "price_history": [
+        {
+          "date": "2025-12-27",
+          "total_price": 4480.0,
+          "change": null
+        }
+      ],
+      "sold_date": "2026-03-01"
+    },
+    "562143910f045fb7": {
+      "property_id": "562143910f045fb7",
+      "location": "柏市逆井藤ノ台 7-6",
+      "building_area": 298.0,
+      "land_area": 152.27,
+      "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/panasonichomes_sm.png\" alt=\"-\" style=\"height:32px;\">",
+      "first_seen": "2025-12-27",
+      "last_seen": "2026-05-01",
+      "status": "active",
+      "price_history": [
+        {
+          "date": "2025-12-27",
+          "total_price": 4600.0,
+          "change": null
+        },
+        {
+          "date": "2026-03-01",
+          "total_price": 4490.0,
+          "change": -110.0
+        }
+      ]
+    },
+    "6177b334cb314b65": {
+      "property_id": "6177b334cb314b65",
+      "location": "柏市船戸３丁目",
+      "building_area": 150.11,
+      "land_area": 105.16,
+      "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/sumitomo_sm.png\" alt=\"住友林業\" style=\"height:32px;\">",
+      "first_seen": "2025-12-27",
+      "last_seen": "2026-01-01",
+      "status": "sold_presumed",
+      "price_history": [
+        {
+          "date": "2025-12-27",
+          "total_price": 5980.0,
+          "change": null
+        }
+      ],
+      "sold_date": "2026-02-01"
+    },
+    "b11ae132aa9190fc": {
+      "property_id": "b11ae132aa9190fc",
+      "location": "柏市篠籠田",
+      "building_area": 122.94,
+      "land_area": 99.49,
+      "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/asahikasei_sm.png\" alt=\"-\" style=\"height:32px;\">",
+      "first_seen": "2026-03-01",
+      "last_seen": "2026-05-01",
+      "status": "active",
+      "price_history": [
+        {
+          "date": "2026-03-01",
+          "total_price": 4780.0,
+          "change": null
+        }
+      ]
+    },
+    "892417e6e75ae3dc": {
+      "property_id": "892417e6e75ae3dc",
+      "location": "柏市千代田３丁目",
+      "building_area": 132.23,
+      "land_area": 127.78,
+      "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/daiwahouse_sm.png\" alt=\"大和ハウス\" style=\"height:32px;\">",
+      "first_seen": "2026-03-01",
+      "last_seen": "2026-03-01",
+      "status": "sold_presumed",
+      "price_history": [
+        {
+          "date": "2026-03-01",
+          "total_price": 6780.0,
+          "change": null
+        }
+      ],
+      "sold_date": "2026-05-01"
+    },
+    "236ae8f3213c7ddc": {
+      "property_id": "236ae8f3213c7ddc",
+      "location": "柏市大室",
+      "building_area": 170.11,
+      "land_area": 142.08,
+      "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/asahikasei_sm.png\" alt=\"-\" style=\"height:32px;\">",
+      "first_seen": "2026-05-01",
+      "last_seen": "2026-05-01",
+      "status": "active",
+      "price_history": [
+        {
+          "date": "2026-05-01",
+          "total_price": 3980.0,
+          "change": null
+        }
+      ]
+    }
+  },
+  "statistics": {}
+}

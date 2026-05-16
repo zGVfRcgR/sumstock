@@ -31,9 +31,12 @@ exclude:
 # Include tracking data
 include:
   - tracking_db.json
+  - data/tracking/
+  - data/reports/
   - data/tracking_report.md
   - data/mlit_matching_report.md
   - docs/images/
+  - tracking/
 
 # Just the Docs specific settings
 # Enable or disable the site search
