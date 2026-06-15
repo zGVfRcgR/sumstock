@@ -243,12 +243,13 @@ class PropertyTracker:
         
         return stats
     
-    def generate_report(self) -> str:
+    def generate_report(self, city_name: str = "") -> str:
         """分析レポートを生成"""
         stats = self.get_statistics()
-        
+        title = f"{city_name} " if city_name else ""
+
         report = f"""
-# 物件追跡レポート
+# {title}物件追跡レポート
 生成日時: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
 ## 概要
@@ -297,43 +298,112 @@ class PropertyTracker:
         return report
 
 
-def main():
-    """メイン処理"""
-    tracker = PropertyTracker()
+def discover_cities(data_dir: Path) -> List[Tuple[str, str, Path]]:
+    """
+    data/ 配下の全都道府県・市区町村を自動検出
     
-    # data/千葉県/市川市/配下のMarkdownファイルを処理
-    city_dir = tracker.data_dir / "千葉県" / "市川市"
+    Returns:
+        (prefecture, city, city_dir) のリスト
+    """
+    cities = []
+    if not data_dir.exists():
+        return cities
+    for pref_dir in sorted(data_dir.iterdir()):
+        if not pref_dir.is_dir():
+            continue
+        # tracking/ や reports/ などの管理ディレクトリを除外
+        if pref_dir.name in ('tracking', 'reports'):
+            continue
+        for city_dir in sorted(pref_dir.iterdir()):
+            if not city_dir.is_dir():
+                continue
+            md_files = [f for f in city_dir.glob("*.md") if f.stem != "index"]
+            if md_files:
+                cities.append((pref_dir.name, city_dir.name, city_dir))
+    return cities
+
+
+def process_city(data_dir: Path, prefecture: str, city: str, city_dir: Path) -> Optional[str]:
+    """
+    指定した市区町村の物件追跡を実行し、月次レポートを保存する
     
-    if not city_dir.exists():
-        print(f"Error: {city_dir} が見つかりません")
-        return
-    
-    # 日付順にソートしてMarkdownファイルを処理
+    Returns:
+        生成したレポートの文字列（失敗時はNone）
+    """
+    tracking_dir = data_dir / "tracking"
+    tracking_dir.mkdir(parents=True, exist_ok=True)
+
+    db_filename = f"{prefecture}_{city}_tracking_db.json"
+    tracker = PropertyTracker(
+        data_dir=str(data_dir),
+        tracking_db=str(tracking_dir / db_filename)
+    )
+
     md_files = sorted([f for f in city_dir.glob("*.md") if f.stem != "index"])
-    
-    print(f"処理するファイル数: {len(md_files)}")
-    
+    print(f"\n{'='*60}")
+    print(f"処理中: {prefecture} {city}  ({len(md_files)}ファイル)")
+
     for md_file in md_files:
-        print(f"処理中: {md_file.name}")
         properties = tracker.parse_markdown_data(md_file)
-        
         if properties:
-            # ファイル名から日付を取得（YYYY-MM-DD.md形式）
             scan_date = md_file.stem
             tracker.update_property_tracking(properties, scan_date)
-            print(f"  {len(properties)}件の物件を処理")
-    
+            print(f"  {md_file.name}: {len(properties)}件")
+
     # レポート生成
-    report = tracker.generate_report()
-    print("\n" + "="*60)
-    print(report)
-    print("="*60)
-    
-    # レポートをファイルに保存
-    report_path = tracker.data_dir / "tracking_report.md"
+    report = tracker.generate_report(city_name=f"{prefecture} {city}")
+
+    # 月次レポートを保存（data/reports/YYYY-MM/）
+    now = datetime.now()
+    month_str = now.strftime('%Y-%m')
+    report_dir = data_dir / "reports" / month_str
+    report_dir.mkdir(parents=True, exist_ok=True)
+
+    report_filename = f"{prefecture}_{city}_report.md"
+    report_path = report_dir / report_filename
     with open(report_path, 'w', encoding='utf-8') as f:
         f.write(report)
-    print(f"\nレポートを保存しました: {report_path}")
+    print(f"  → レポート保存: {report_path}")
+
+    # 最新レポートも保存（latest/）
+    latest_dir = data_dir / "reports" / "latest"
+    latest_dir.mkdir(parents=True, exist_ok=True)
+    with open(latest_dir / report_filename, 'w', encoding='utf-8') as f:
+        f.write(report)
+
+    return report
+
+
+def main():
+    """メイン処理"""
+    import argparse
+
+    parser = argparse.ArgumentParser(description='物件追跡システム')
+    parser.add_argument('--city', help='市区町村名（指定しない場合は全市）')
+    parser.add_argument('--prefecture', default='千葉県', help='都道府県名（デフォルト: 千葉県）')
+    parser.add_argument('--data-dir', default='data', help='データディレクトリ')
+    args = parser.parse_args()
+
+    data_dir = Path(args.data_dir)
+    cities = discover_cities(data_dir)
+
+    if not cities:
+        print(f"Error: {data_dir} 配下に市区町村データが見つかりません")
+        return
+
+    # --city 指定時は該当市のみ処理
+    if args.city:
+        cities = [(p, c, d) for p, c, d in cities
+                  if c == args.city and p == args.prefecture]
+        if not cities:
+            print(f"Error: {args.prefecture} {args.city} のデータが見つかりません")
+            return
+
+    print(f"追跡対象: {len(cities)}市区町村")
+    for pref, city, city_dir in cities:
+        process_city(data_dir, pref, city, city_dir)
+
+    print("\n✅ 全市区町村の処理が完了しました")
 
 
 if __name__ == "__main__":

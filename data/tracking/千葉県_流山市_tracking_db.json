@@ -1,0 +1,164 @@
+{
+  "properties": {
+    "9da6585541b75ae7": {
+      "property_id": "9da6585541b75ae7",
+      "location": "流山市大字東深井",
+      "building_area": 165.14,
+      "land_area": 131.87,
+      "house_maker": "ヘーベルハウス",
+      "first_seen": "2025-10-19",
+      "last_seen": "2025-10-23",
+      "status": "sold_presumed",
+      "price_history": [
+        {
+          "date": "2025-10-19",
+          "total_price": 2480.0,
+          "change": null
+        }
+      ],
+      "sold_date": "2025-11-01"
+    },
+    "43cd9dac53ef445a": {
+      "property_id": "43cd9dac53ef445a",
+      "location": "流山市おおたかの森北３丁目",
+      "building_area": 203.97,
+      "land_area": 113.65,
+      "house_maker": "-",
+      "first_seen": "2025-10-19",
+      "last_seen": "2025-10-19",
+      "status": "sold_presumed",
+      "price_history": [
+        {
+          "date": "2025-10-19",
+          "total_price": 4180.0,
+          "change": null
+        }
+      ],
+      "sold_date": "2025-10-22"
+    },
+    "3111b11305ce58c9": {
+      "property_id": "3111b11305ce58c9",
+      "location": "流山市こうのす台",
+      "building_area": 165.84,
+      "land_area": 144.84,
+      "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/sekisuihouse_sm.png\" alt=\"-\" style=\"height:32px;\">",
+      "first_seen": "2025-12-01",
+      "last_seen": "2026-05-01",
+      "status": "sold_presumed",
+      "price_history": [
+        {
+          "date": "2025-12-01",
+          "total_price": 5480.0,
+          "change": null
+        },
+        {
+          "date": "2026-04-01",
+          "total_price": 5180.0,
+          "change": -300.0
+        }
+      ],
+      "sold_date": "2026-02-01"
+    },
+    "058fffa494bc5a0f": {
+      "property_id": "058fffa494bc5a0f",
+      "location": "流山市江戸川台東２丁目",
+      "building_area": 310.11,
+      "land_area": 82.81,
+      "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/sumitomo_sm.png\" alt=\"住友林業\" style=\"height:32px;\">",
+      "first_seen": "2025-12-27",
+      "last_seen": "2026-01-01",
+      "status": "sold_presumed",
+      "price_history": [
+        {
+          "date": "2025-12-27",
+          "total_price": 5980.0,
+          "change": null
+        }
+      ],
+      "sold_date": "2026-02-01"
+    },
+    "bd9424a741011d2b": {
+      "property_id": "bd9424a741011d2b",
+      "location": "流山市おおたかの森南２丁目",
+      "building_area": 140.89,
+      "land_area": 98.52,
+      "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/daiwahouse_sm.png\" alt=\"大和ハウス\" style=\"height:32px;\">",
+      "first_seen": "2025-12-27",
+      "last_seen": "2026-03-01",
+      "status": "sold_presumed",
+      "price_history": [
+        {
+          "date": "2025-12-27",
+          "total_price": 8880.0,
+          "change": null
+        }
+      ],
+      "sold_date": "2026-04-01"
+    },
+    "01bac594acfa29ea": {
+      "property_id": "01bac594acfa29ea",
+      "location": "流山市大字東深井１７２番１４",
+      "building_area": 198.43,
+      "land_area": 117.39,
+      "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/sekisuihouse_sm.png\" alt=\"-\" style=\"height:32px;\">",
+      "first_seen": "2026-02-01",
+      "last_seen": "2026-03-01",
+      "status": "sold_presumed",
+      "price_history": [
+        {
+          "date": "2026-02-01",
+          "total_price": 3980.0,
+          "change": null
+        }
+      ],
+      "sold_date": "2026-04-01"
+    },
+    "1b47e8c5846deb0d": {
+      "property_id": "1b47e8c5846deb0d",
+      "location": "流山市こうのす台２５６番２９",
+      "building_area": 165.84,
+      "land_area": 144.84,
+      "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/sekisuihouse_sm.png\" alt=\"-\" style=\"height:32px;\">",
+      "first_seen": "2026-02-01",
+      "last_seen": "2026-03-01",
+      "status": "sold_presumed",
+      "price_history": [
+        {
+          "date": "2026-02-01",
+          "total_price": 5480.0,
+          "change": null
+        },
+        {
+          "date": "2026-03-01",
+          "total_price": 5180.0,
+          "change": -300.0
+        }
+      ],
+      "sold_date": "2026-04-01"
+    },
+    "1bf77220f9889c5e": {
+      "property_id": "1bf77220f9889c5e",
+      "location": "流山市宮園２丁目 ２１－１６",
+      "building_area": 165.06,
+      "land_area": 138.13,
+      "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/sekisuiheim_sm.png\" alt=\"セキスイハイム\" style=\"height:32px;\">",
+      "first_seen": "2026-03-01",
+      "last_seen": "2026-04-07",
+      "status": "sold_presumed",
+      "price_history": [
+        {
+          "date": "2026-03-01",
+          "total_price": 4680.0,
+          "change": null
+        },
+        {
+          "date": "2026-04-07",
+          "total_price": 4280.0,
+          "change": -400.0
+        }
+      ],
+      "sold_date": "2026-05-01"
+    }
+  },
+  "statistics": {}
+}

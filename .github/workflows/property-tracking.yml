@@ -11,6 +11,7 @@ on:
       - 'data/**/*.md'
       - 'scripts/track_properties.py'
       - 'scripts/visualize_tracking.py'
+      - 'scripts/generate_tracking_index.py'
 
 permissions:
   contents: write
@@ -40,17 +41,21 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install matplotlib numpy
       
-      - name: Run property tracking
+      - name: Run property tracking (all cities)
         run: |
-          echo "🔍 Running property tracking analysis..."
+          echo "🔍 Running property tracking for all cities..."
           python3 scripts/track_properties.py
       
-      - name: Generate visualizations
+      - name: Generate visualizations (all cities)
         run: |
-          echo "📊 Generating visualizations..."
+          echo "📊 Generating visualizations for all cities..."
           python3 scripts/visualize_tracking.py
+      
+      - name: Generate tracking index pages
+        run: |
+          echo "📄 Generating tracking index and city pages..."
+          python3 scripts/generate_tracking_index.py
       
       - name: Run MLIT API matching (if API key available)
         env:
@@ -71,23 +76,26 @@ jobs:
       
       - name: Commit tracking data
         run: |
-          git add tracking_db.json
-          git add data/tracking_report.md
+          git add data/tracking/
+          git add data/reports/
+          git add docs/images/
+          git add tracking.md
+          git add tracking/
           git add data/mlit_matching_report.md || true
-          git add docs/images/*.png
           
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "🤖 Update property tracking data [$(date +'%Y-%m-%d %H:%M')]"
+            git commit -m "🤖 Update property tracking data [$(date +'%Y-%m')]"
             git push
           fi
       
       - name: Display tracking summary
         run: |
-          echo "📈 Tracking Summary:"
-          echo "==================="
-          cat data/tracking_report.md | head -30
+          echo "📈 Cities tracked:"
+          ls data/tracking/ 2>/dev/null | grep tracking_db || echo "(none yet)"
+          echo "📅 Monthly reports:"
+          ls data/reports/ 2>/dev/null | grep -v latest || echo "(none yet)"
 
   build-and-deploy-pages:
     needs: track-and-analyze
@@ -123,3 +131,4 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+

@@ -1,0 +1,220 @@
+{
+  "properties": {
+    "c36ac35b10d07fcf": {
+      "property_id": "c36ac35b10d07fcf",
+      "location": "市川市大和田３丁目 1050番7、1050番8",
+      "building_area": 64.93,
+      "land_area": 65.61,
+      "house_maker": "-",
+      "first_seen": "2025-10-19",
+      "last_seen": "2025-11-01",
+      "status": "sold_presumed",
+      "price_history": [
+        {
+          "date": "2025-10-19",
+          "total_price": 3000.0,
+          "change": null
+        }
+      ],
+      "sold_date": "2025-12-01"
+    },
+    "af440b0c93784063": {
+      "property_id": "af440b0c93784063",
+      "location": "市川市国府台４丁目",
+      "building_area": 323.96,
+      "land_area": 184.69,
+      "house_maker": "-",
+      "first_seen": "2025-10-19",
+      "last_seen": "2026-05-01",
+      "status": "active",
+      "price_history": [
+        {
+          "date": "2025-10-19",
+          "total_price": 6490.0,
+          "change": null
+        },
+        {
+          "date": "2025-12-27",
+          "total_price": 6290.0,
+          "change": -200.0
+        },
+        {
+          "date": "2026-03-01",
+          "total_price": 5980.0,
+          "change": -310.0
+        }
+      ]
+    },
+    "595b347277e23d84": {
+      "property_id": "595b347277e23d84",
+      "location": "市川市行徳駅前４丁目",
+      "building_area": 119.95,
+      "land_area": 113.44,
+      "house_maker": "三井ホーム",
+      "first_seen": "2025-10-19",
+      "last_seen": "2025-11-01",
+      "status": "sold_presumed",
+      "price_history": [
+        {
+          "date": "2025-10-19",
+          "total_price": 6880.0,
+          "change": null
+        }
+      ],
+      "sold_date": "2025-12-01"
+    },
+    "8f784b919fc2a559": {
+      "property_id": "8f784b919fc2a559",
+      "location": "市川市八幡６丁目",
+      "building_area": 227.14,
+      "land_area": 178.16,
+      "house_maker": "積水ハウス",
+      "first_seen": "2025-10-19",
+      "last_seen": "2026-05-01",
+      "status": "sold_presumed",
+      "price_history": [
+        {
+          "date": "2025-10-19",
+          "total_price": 8400.0,
+          "change": null
+        }
+      ],
+      "sold_date": "2026-02-01"
+    },
+    "443853396942dbee": {
+      "property_id": "443853396942dbee",
+      "location": "市川市相之川２丁目",
+      "building_area": 165.3,
+      "land_area": 217.6,
+      "house_maker": "積水ハウス",
+      "first_seen": "2025-10-19",
+      "last_seen": "2026-05-01",
+      "status": "sold_presumed",
+      "price_history": [
+        {
+          "date": "2025-10-19",
+          "total_price": 2000.0,
+          "change": null
+        },
+        {
+          "date": "2025-10-22",
+          "total_price": 12000.0,
+          "change": 10000.0
+        }
+      ],
+      "sold_date": "2026-02-01"
+    },
+    "012e3ac77431b361": {
+      "property_id": "012e3ac77431b361",
+      "location": "市川市中国分２丁目",
+      "building_area": 130.58,
+      "land_area": 103.0,
+      "house_maker": "-",
+      "first_seen": "2025-10-22",
+      "last_seen": "2026-05-01",
+      "status": "active",
+      "price_history": [
+        {
+          "date": "2025-10-22",
+          "total_price": 2498.0,
+          "change": null
+        }
+      ]
+    },
+    "e64219cae04cbfdc": {
+      "property_id": "e64219cae04cbfdc",
+      "location": "市川市堀之内４丁目",
+      "building_area": 155.32,
+      "land_area": 109.3,
+      "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/sumitomo_sm.png\" alt=\"住友林業\" style=\"height:32px;\">",
+      "first_seen": "2025-11-01",
+      "last_seen": "2026-04-07",
+      "status": "sold_presumed",
+      "price_history": [
+        {
+          "date": "2025-11-01",
+          "total_price": 8280.0,
+          "change": null
+        },
+        {
+          "date": "2025-12-01",
+          "total_price": 7980.0,
+          "change": -300.0
+        }
+      ],
+      "sold_date": "2026-05-01"
+    },
+    "e49644e431a174cf": {
+      "property_id": "e49644e431a174cf",
+      "location": "市川市東菅野１丁目",
+      "building_area": 157.9,
+      "land_area": 116.98,
+      "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/daiwahouse_sm.png\" alt=\"-\" style=\"height:32px;\">",
+      "first_seen": "2025-12-27",
+      "last_seen": "2026-01-01",
+      "status": "sold_presumed",
+      "price_history": [
+        {
+          "date": "2025-12-27",
+          "total_price": 6650.0,
+          "change": null
+        }
+      ],
+      "sold_date": "2026-02-01"
+    },
+    "8841f3010e55ae4e": {
+      "property_id": "8841f3010e55ae4e",
+      "location": "市川市八幡６丁目２０６３番９",
+      "building_area": 227.14,
+      "land_area": 178.16,
+      "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/sekisuihouse_sm.png\" alt=\"積水ハウス\" style=\"height:32px;\">",
+      "first_seen": "2026-02-01",
+      "last_seen": "2026-03-01",
+      "status": "sold_presumed",
+      "price_history": [
+        {
+          "date": "2026-02-01",
+          "total_price": 8400.0,
+          "change": null
+        }
+      ],
+      "sold_date": "2026-04-01"
+    },
+    "c3a055169d1ab71b": {
+      "property_id": "c3a055169d1ab71b",
+      "location": "市川市相之川２丁目１番３２",
+      "building_area": 165.3,
+      "land_area": 217.6,
+      "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/sekisuihouse_sm.png\" alt=\"積水ハウス\" style=\"height:32px;\">",
+      "first_seen": "2026-02-01",
+      "last_seen": "2026-03-01",
+      "status": "sold_presumed",
+      "price_history": [
+        {
+          "date": "2026-02-01",
+          "total_price": 12000.0,
+          "change": null
+        }
+      ],
+      "sold_date": "2026-04-01"
+    },
+    "51b228ef1fa2def0": {
+      "property_id": "51b228ef1fa2def0",
+      "location": "市川市新田４丁目",
+      "building_area": 112.69,
+      "land_area": 118.18,
+      "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/asahikasei_sm.png\" alt=\"-\" style=\"height:32px;\">",
+      "first_seen": "2026-05-01",
+      "last_seen": "2026-05-01",
+      "status": "active",
+      "price_history": [
+        {
+          "date": "2026-05-01",
+          "total_price": 4730.0,
+          "change": null
+        }
+      ]
+    }
+  },
+  "statistics": {}
+}
