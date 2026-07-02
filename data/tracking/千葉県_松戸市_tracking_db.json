@@ -39,6 +39,16 @@
           "date": "2026-04-01",
           "total_price": 3180.0,
           "change": -100.0
+        },
+        {
+          "date": "2025-10-19",
+          "total_price": 3280.0,
+          "change": 100.0
+        },
+        {
+          "date": "2026-04-01",
+          "total_price": 3180.0,
+          "change": -100.0
         }
       ],
       "sold_date": "2026-05-01"
@@ -97,6 +107,21 @@
           "date": "2026-04-01",
           "total_price": 3280.0,
           "change": -100.0
+        },
+        {
+          "date": "2025-10-19",
+          "total_price": 3480.0,
+          "change": 200.0
+        },
+        {
+          "date": "2025-12-01",
+          "total_price": 3380.0,
+          "change": -100.0
+        },
+        {
+          "date": "2026-04-01",
+          "total_price": 3280.0,
+          "change": -100.0
         }
       ],
       "sold_date": "2026-02-01"
@@ -115,6 +140,16 @@
           "date": "2025-10-19",
           "total_price": 5480.0,
           "change": null
+        },
+        {
+          "date": "2025-12-27",
+          "total_price": 5280.0,
+          "change": -200.0
+        },
+        {
+          "date": "2025-10-19",
+          "total_price": 5480.0,
+          "change": 200.0
         },
         {
           "date": "2025-12-27",
@@ -218,6 +253,16 @@
           "date": "2026-03-01",
           "total_price": 5980.0,
           "change": -300.0
+        },
+        {
+          "date": "2026-02-01",
+          "total_price": 6280.0,
+          "change": 300.0
+        },
+        {
+          "date": "2026-03-01",
+          "total_price": 5980.0,
+          "change": -300.0
         }
       ],
       "sold_date": "2026-05-01"
@@ -254,6 +299,16 @@
           "date": "2026-04-07",
           "total_price": 6980.0,
           "change": null
+        },
+        {
+          "date": "2026-06-01",
+          "total_price": 6880.0,
+          "change": -100.0
+        },
+        {
+          "date": "2026-04-07",
+          "total_price": 6980.0,
+          "change": 100.0
         },
         {
           "date": "2026-06-01",

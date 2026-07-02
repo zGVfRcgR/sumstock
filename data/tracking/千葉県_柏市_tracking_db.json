@@ -29,6 +29,16 @@
           "date": "2025-12-27",
           "total_price": 2490.0,
           "change": -100.0
+        },
+        {
+          "date": "2025-10-19",
+          "total_price": 2590.0,
+          "change": 100.0
+        },
+        {
+          "date": "2025-12-27",
+          "total_price": 2490.0,
+          "change": -100.0
         }
       ],
       "sold_date": "2026-03-01"
@@ -188,6 +198,16 @@
           "date": "2026-03-01",
           "total_price": 4490.0,
           "change": -110.0
+        },
+        {
+          "date": "2025-12-27",
+          "total_price": 4600.0,
+          "change": 110.0
+        },
+        {
+          "date": "2026-03-01",
+          "total_price": 4490.0,
+          "change": -110.0
         }
       ],
       "sold_date": "2025-10-19"
@@ -263,6 +283,23 @@
         }
       ],
       "sold_date": "2025-10-19"
+    },
+    "0cd14ad16c3352db": {
+      "property_id": "0cd14ad16c3352db",
+      "location": "柏市豊四季",
+      "building_area": 160.04,
+      "land_area": 118.74,
+      "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/sekisuiheim_sm.png\" alt=\"セキスイハイム\" style=\"height:32px;\">",
+      "first_seen": "2026-07-02",
+      "last_seen": "2026-07-02",
+      "status": "active",
+      "price_history": [
+        {
+          "date": "2026-07-02",
+          "total_price": 3980.0,
+          "change": null
+        }
+      ]
     }
   },
   "statistics": {}
