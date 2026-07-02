@@ -19,6 +19,16 @@
           "date": "2025-12-27",
           "total_price": 2490.0,
           "change": -100.0
+        },
+        {
+          "date": "2025-10-19",
+          "total_price": 2590.0,
+          "change": 100.0
+        },
+        {
+          "date": "2025-12-27",
+          "total_price": 2490.0,
+          "change": -100.0
         }
       ],
       "sold_date": "2026-03-01"
@@ -103,14 +113,15 @@
       "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/daiwahouse_sm.png\" alt=\"大和ハウス\" style=\"height:32px;\">",
       "first_seen": "2025-12-27",
       "last_seen": "2026-05-01",
-      "status": "active",
+      "status": "sold_presumed",
       "price_history": [
         {
           "date": "2025-12-27",
           "total_price": 1980.0,
           "change": null
         }
-      ]
+      ],
+      "sold_date": "2025-10-19"
     },
     "8b66d84f65940abd": {
       "property_id": "8b66d84f65940abd",
@@ -156,7 +167,7 @@
       "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/panasonichomes_sm.png\" alt=\"-\" style=\"height:32px;\">",
       "first_seen": "2025-12-27",
       "last_seen": "2026-05-01",
-      "status": "active",
+      "status": "sold_presumed",
       "price_history": [
         {
           "date": "2025-12-27",
@@ -167,8 +178,19 @@
           "date": "2026-03-01",
           "total_price": 4490.0,
           "change": -110.0
+        },
+        {
+          "date": "2025-12-27",
+          "total_price": 4600.0,
+          "change": 110.0
+        },
+        {
+          "date": "2026-03-01",
+          "total_price": 4490.0,
+          "change": -110.0
         }
-      ]
+      ],
+      "sold_date": "2025-10-19"
     },
     "6177b334cb314b65": {
       "property_id": "6177b334cb314b65",
@@ -195,15 +217,16 @@
       "land_area": 99.49,
       "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/asahikasei_sm.png\" alt=\"-\" style=\"height:32px;\">",
       "first_seen": "2026-03-01",
-      "last_seen": "2026-05-01",
-      "status": "active",
+      "last_seen": "2026-06-01",
+      "status": "sold_presumed",
       "price_history": [
         {
           "date": "2026-03-01",
           "total_price": 4780.0,
           "change": null
         }
-      ]
+      ],
+      "sold_date": "2025-10-19"
     },
     "892417e6e75ae3dc": {
       "property_id": "892417e6e75ae3dc",
@@ -230,15 +253,16 @@
       "land_area": 142.08,
       "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/asahikasei_sm.png\" alt=\"-\" style=\"height:32px;\">",
       "first_seen": "2026-05-01",
-      "last_seen": "2026-05-01",
-      "status": "active",
+      "last_seen": "2026-06-01",
+      "status": "sold_presumed",
       "price_history": [
         {
           "date": "2026-05-01",
           "total_price": 3980.0,
           "change": null
         }
-      ]
+      ],
+      "sold_date": "2025-10-19"
     }
   },
   "statistics": {}

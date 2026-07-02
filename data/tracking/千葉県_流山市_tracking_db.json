@@ -43,13 +43,23 @@
       "land_area": 144.84,
       "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/sekisuihouse_sm.png\" alt=\"-\" style=\"height:32px;\">",
       "first_seen": "2025-12-01",
-      "last_seen": "2026-05-01",
+      "last_seen": "2026-06-01",
       "status": "sold_presumed",
       "price_history": [
         {
           "date": "2025-12-01",
           "total_price": 5480.0,
           "change": null
+        },
+        {
+          "date": "2026-04-01",
+          "total_price": 5180.0,
+          "change": -300.0
+        },
+        {
+          "date": "2025-12-01",
+          "total_price": 5480.0,
+          "change": 300.0
         },
         {
           "date": "2026-04-01",
@@ -132,6 +142,16 @@
           "date": "2026-03-01",
           "total_price": 5180.0,
           "change": -300.0
+        },
+        {
+          "date": "2026-02-01",
+          "total_price": 5480.0,
+          "change": 300.0
+        },
+        {
+          "date": "2026-03-01",
+          "total_price": 5180.0,
+          "change": -300.0
         }
       ],
       "sold_date": "2026-04-01"
@@ -150,6 +170,16 @@
           "date": "2026-03-01",
           "total_price": 4680.0,
           "change": null
+        },
+        {
+          "date": "2026-04-07",
+          "total_price": 4280.0,
+          "change": -400.0
+        },
+        {
+          "date": "2026-03-01",
+          "total_price": 4680.0,
+          "change": 400.0
         },
         {
           "date": "2026-04-07",

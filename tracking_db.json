@@ -25,13 +25,43 @@
       "land_area": 184.69,
       "house_maker": "-",
       "first_seen": "2025-10-19",
-      "last_seen": "2026-05-01",
+      "last_seen": "2026-06-01",
       "status": "active",
       "price_history": [
         {
           "date": "2025-10-19",
           "total_price": 6490.0,
           "change": null
+        },
+        {
+          "date": "2025-12-27",
+          "total_price": 6290.0,
+          "change": -200.0
+        },
+        {
+          "date": "2026-03-01",
+          "total_price": 5980.0,
+          "change": -310.0
+        },
+        {
+          "date": "2025-10-19",
+          "total_price": 6490.0,
+          "change": 510.0
+        },
+        {
+          "date": "2025-12-27",
+          "total_price": 6290.0,
+          "change": -200.0
+        },
+        {
+          "date": "2026-03-01",
+          "total_price": 5980.0,
+          "change": -310.0
+        },
+        {
+          "date": "2025-10-19",
+          "total_price": 6490.0,
+          "change": 510.0
         },
         {
           "date": "2025-12-27",
@@ -103,13 +133,33 @@
       "land_area": 217.6,
       "house_maker": "積水ハウス",
       "first_seen": "2025-10-19",
-      "last_seen": "2026-05-01",
+      "last_seen": "2026-06-01",
       "status": "sold_presumed",
       "price_history": [
         {
           "date": "2025-10-19",
           "total_price": 2000.0,
           "change": null
+        },
+        {
+          "date": "2025-10-22",
+          "total_price": 12000.0,
+          "change": 10000.0
+        },
+        {
+          "date": "2025-10-19",
+          "total_price": 2000.0,
+          "change": -10000.0
+        },
+        {
+          "date": "2025-10-22",
+          "total_price": 12000.0,
+          "change": 10000.0
+        },
+        {
+          "date": "2025-10-19",
+          "total_price": 2000.0,
+          "change": -10000.0
         },
         {
           "date": "2025-10-22",
@@ -136,7 +186,7 @@
       "land_area": 103.0,
       "house_maker": "-",
       "first_seen": "2025-10-22",
-      "last_seen": "2026-05-01",
+      "last_seen": "2026-06-01",
       "status": "sold_presumed",
       "price_history": [
         {
@@ -154,13 +204,33 @@
       "land_area": 109.3,
       "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/sumitomo_sm.png\" alt=\"住友林業\" style=\"height:32px;\">",
       "first_seen": "2025-11-01",
-      "last_seen": "2026-04-07",
+      "last_seen": "2026-06-01",
       "status": "sold_presumed",
       "price_history": [
         {
           "date": "2025-11-01",
           "total_price": 8280.0,
           "change": null
+        },
+        {
+          "date": "2025-12-01",
+          "total_price": 7980.0,
+          "change": -300.0
+        },
+        {
+          "date": "2025-11-01",
+          "total_price": 8280.0,
+          "change": 300.0
+        },
+        {
+          "date": "2025-12-01",
+          "total_price": 7980.0,
+          "change": -300.0
+        },
+        {
+          "date": "2025-11-01",
+          "total_price": 8280.0,
+          "change": 300.0
         },
         {
           "date": "2025-12-01",
@@ -241,7 +311,7 @@
       "land_area": 118.18,
       "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/asahikasei_sm.png\" alt=\"-\" style=\"height:32px;\">",
       "first_seen": "2026-05-01",
-      "last_seen": "2026-05-01",
+      "last_seen": "2026-06-01",
       "status": "sold_presumed",
       "price_history": [
         {
@@ -251,6 +321,40 @@
         }
       ],
       "sold_date": "2025-10-19"
+    },
+    "7e0953a8bf9e069c": {
+      "property_id": "7e0953a8bf9e069c",
+      "location": "市川市欠真間２丁目",
+      "building_area": 82.14,
+      "land_area": 132.48,
+      "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/mitsuihome_sm.png\" alt=\"三井ホーム\" style=\"height:32px;\">",
+      "first_seen": "2026-06-01",
+      "last_seen": "2026-06-01",
+      "status": "active",
+      "price_history": [
+        {
+          "date": "2026-06-01",
+          "total_price": 4680.0,
+          "change": null
+        }
+      ]
+    },
+    "c7f67a063f566af3": {
+      "property_id": "c7f67a063f566af3",
+      "location": "市川市中国分４丁目",
+      "building_area": 144.07,
+      "land_area": 112.16,
+      "house_maker": "<img src=\"https://sumstock.jp/assets/img/logo/daiwahouse_sm.png\" alt=\"-\" style=\"height:32px;\">",
+      "first_seen": "2026-06-01",
+      "last_seen": "2026-06-01",
+      "status": "active",
+      "price_history": [
+        {
+          "date": "2026-06-01",
+          "total_price": 4860.0,
+          "change": null
+        }
+      ]
     }
   },
   "statistics": {}
