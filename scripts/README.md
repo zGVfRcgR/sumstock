@@ -5,6 +5,7 @@
 ## ファイル
 
 - `scrape_sumstock.py` - SumStockのWebサイトをスクレイピングして物件データを取得するメインスクリプト
+- `update_latest_and_blog.py` - 最新データ取得・追跡更新・ペルソナ議事録生成を一括実行する統合スクリプト
 - `test_scraper.py` - スクレイパーの機能をテストするためのスクリプト（モックデータを使用）
 - `real_estate_api.py` - 国土交通省の不動産情報ライブラリAPIクライアント
 - `real_estate_api_example.py` - 不動産情報ライブラリAPIの使用例
@@ -16,6 +17,18 @@
 
 ```bash
 python scripts/scrape_sumstock.py "https://sumstock.jp/search/02/12/12207"
+```
+
+### 最新データ取得 + 議事録生成（推奨）
+
+```bash
+python scripts/update_latest_and_blog.py
+```
+
+特定URLだけ処理する場合:
+
+```bash
+python scripts/update_latest_and_blog.py "https://sumstock.jp/search/02/12/12207"
 ```
 
 ### Issue本文からURLを自動抽出
@@ -67,9 +80,11 @@ data/YYYY-MM-DD.md
 - **処理フロー**:
   1. IssueからURLを抽出
   2. データをスクレイピング
-  3. Markdownファイルを生成
-  4. 新しいブランチを作成
-  5. Pull Requestを作成
+  3. 市区町村別データファイルを生成
+  4. 追跡レポート（`data/reports/latest`）を更新
+  5. ペルソナ対話形式のブログ議事録（`blog/YYYY-MM-DD.md`）を生成
+  6. 新しいブランチを作成
+  7. Pull Requestを作成
 
 ## テスト
 

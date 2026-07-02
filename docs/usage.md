@@ -64,7 +64,30 @@ nav_order: 2
 2. **データをスクレイピング**: 指定されたURLから物件情報を取得
 3. **単価を自動計算**: 建物単価（建物価格 ÷ 建物面積）と土地単価（土地価格 ÷ 土地面積）を計算
 4. **Markdownファイルを生成**: 取得日をファイル名としたMarkdownファイルを作成
-5. **PRを自動作成**: 新しいブランチを作成し、Pull Requestを発行
+5. **追跡レポートを更新**: `data/reports/latest/` と `data/tracking/` を更新
+6. **ブログ議事録を生成**: 各ペルソナ（@analyst / @investor / @housemaker / @denier ほか）視点の議事を `blog/` に追加
+7. **PRを自動作成**: 新しいブランチを作成し、Pull Requestを発行
+
+### ローカルで最新取得 + 議事録追加を実行
+
+以下のコマンドで、最新取得から議事録生成まで一括実行できます。
+
+```bash
+python scripts/update_latest_and_blog.py
+```
+
+特定URLのみ対象にする場合:
+
+```bash
+python scripts/update_latest_and_blog.py "https://sumstock.jp/search/02/12/12207"
+```
+
+生成される主な成果物:
+
+- `data/<都道府県>/<市区町村>/<YYYY-MM-DD>.md`
+- `data/reports/latest/<都道府県>_<市区町村>_report.md`
+- `tracking.md` と `tracking/<都道府県>_<市区町村>.md`
+- `blog/<YYYY-MM-DD>.md`（ペルソナ対話形式の議事録）
 
 ### 対象URL
 

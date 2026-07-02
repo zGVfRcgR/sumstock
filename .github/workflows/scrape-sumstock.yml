@@ -55,15 +55,15 @@ jobs:
             core.setOutput('issue_body', issueBody);
             return issueBody;
 
-      - name: Run scraper
+      - name: Run latest data pipeline (scrape + tracking + blog minutes)
         env:
           ISSUE_BODY: ${{ steps.get-issue.outputs.issue_body }}
           REINFOLIB_API_KEY: ${{ secrets.REINFOLIB_API_KEY }}
         run: |
           if [ -n "${{ inputs.url }}" ]; then
-            python scripts/scrape_sumstock.py "${{ inputs.url }}"
+            python scripts/update_latest_and_blog.py "${{ inputs.url }}"
           else
-            python scripts/scrape_sumstock.py
+            python scripts/update_latest_and_blog.py
           fi
 
       - name: Configure Git
@@ -81,12 +81,12 @@ jobs:
         id: create-pr
         uses: peter-evans/create-pull-request@v6
         with:
-          commit-message: "Add SumStock data for ${{ env.DATE }}"
+          commit-message: "Update SumStock data and blog minutes for ${{ env.DATE }}"
           branch: "sumstock-data-${{ env.DATE }}"
           delete-branch: true
-          title: "🏠 SumStock データ更新: ${{ env.DATE_JP }}"
+          title: "🏠 SumStock 最新データ・議事録更新: ${{ env.DATE_JP }}"
           body: |
-            ## SumStock データ更新
+            ## SumStock 最新データ・議事録更新
 
             取得日: ${{ env.DATE_JP }}
 
@@ -94,11 +94,14 @@ jobs:
 
             ### 変更内容
             - 新しい物件データの追加
+            - 追跡レポート（latest/月次）の更新
+            - ペルソナ対話形式のブログ議事録を追加
 
             ### 確認事項
             - [ ] データが正しく取得されているか確認
             - [ ] Markdown形式が正しいか確認
             - [ ] 単価計算が正しいか確認
+            - [ ] ブログ議事録の内容が当月データと整合しているか確認
           labels: |
             automated
             data-update
